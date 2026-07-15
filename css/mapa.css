@@ -1,0 +1,101 @@
+/* ============================================================
+   SIGRA-ETSR · Mapa de sala (U: 3 arriba, 5 abajo en extremos)
+   ============================================================ */
+
+/* Contenedor principal: apila verticalmente */
+.u-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+/* Fila superior: 3 PCs en horizontal (arriba, centradas) */
+.fila-superior-tres {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    justify-content: center;
+}
+
+/* Contenedor de las dos patas (izquierda y derecha) */
+.filas-inferiores-extremos {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    gap: 20px;
+}
+
+/* Pata izquierda: 5 PCs en vertical, pegada a la izquierda */
+.pata-izquierda {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+/* Pata derecha: 5 PCs en vertical, pegada a la derecha */
+.pata-derecha {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+/* ── Cada PC individual ── */
+.pc {
+    border: 1px solid #555555;
+    padding: 10px 8px;
+    text-align: center;
+    font-size: 11px;
+    cursor: pointer;
+    background-color: #cccccc;
+    min-width: 55px;
+    min-height: 36px;
+}
+
+.pc-funcional { background-color: #b9e6b9; }
+.pc-falla     { background-color: #f0a8a8; }
+.pc-sin_eval  { background-color: #d9d9d9; }
+
+/* ── Leyenda ── */
+.leyenda-color {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 1px solid #555555;
+    margin-left: 10px;
+    margin-right: 3px;
+    vertical-align: middle;
+}
+
+.leyenda-funcional { background-color: #b9e6b9; }
+.leyenda-falla     { background-color: #f0a8a8; }
+.leyenda-sin_eval  { background-color: #d9d9d9; }
+
+/* ── Modal ── */
+.modal-oculto { display: none; }
+
+.modal-visible {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-caja {
+    background-color: #ffffff;
+    border: 1px solid #555555;
+    max-width: 320px;
+    margin: 100px auto;
+    padding: 20px;
+}
+
+#mensaje-reporte {
+    margin: 10px 0;
+}

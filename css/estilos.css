@@ -1,0 +1,116 @@
+/* ============================================================
+   SIGRA-ETSR · Componente B
+   css/estilos.css — Estilos globales del sistema
+   ============================================================
+   Estilo simple, funcional, sin sombras, sin bordes redondeados,
+   sin degradados ni transiciones. Colores planos, tipografía básica.
+*/
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    color: #222222;
+    margin: 0;
+    padding: 20px;
+}
+
+/* ── Caja contenedora genérica (login, formularios) ── */
+.caja {
+    background-color: #ffffff;
+    border: 1px solid #999999;
+    max-width: 350px;
+    margin: 60px auto;
+    padding: 20px;
+}
+
+h1, h2 {
+    font-size: 18px;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+/* ── Formularios ── */
+label {
+    display: block;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+input[type="text"],
+input[type="password"],
+select,
+textarea {
+    width: 100%;
+    padding: 5px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    border: 1px solid #999999;
+    margin-top: 3px;
+    box-sizing: border-box;
+}
+
+button,
+input[type="submit"] {
+    background-color: #dddddd;
+    border: 1px solid #999999;
+    padding: 8px 15px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    margin-top: 15px;
+    cursor: pointer;
+}
+
+button:hover,
+input[type="submit"]:hover {
+    background-color: #cccccc;
+}
+
+/* ── Mensajes de error y confirmación ── */
+.mensaje-error {
+    background-color: #ffe0e0;
+    border: 1px solid #cc0000;
+    color: #cc0000;
+    padding: 8px;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+.mensaje-ok {
+    background-color: #e0ffe0;
+    border: 1px solid #007700;
+    color: #007700;
+    padding: 8px;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+/* ── Tablas (se usan en panel del técnico, historial, admin) ── */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    border: 1px solid #999999;
+    padding: 6px 8px;
+    text-align: left;
+    font-size: 13px;
+}
+
+th {
+    background-color: #dddddd;
+}
+
+/* ── Barra superior simple con nombre de usuario y logout ── */
+.barra-superior {
+    background-color: #333333;
+    color: #ffffff;
+    padding: 8px 15px;
+    font-size: 14px;
+}
+
+.barra-superior a {
+    color: #ffffff;
+    margin-left: 15px;
+}
