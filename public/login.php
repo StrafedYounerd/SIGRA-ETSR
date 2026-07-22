@@ -81,13 +81,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 function redirigirSegunRol($rol) {
     switch ($rol) {
         case 'docente':
-            header("Location: /SIGRA/public/docente/seleccionar-sala.php");
+            header("Location: /docente/seleccionar-sala.php");
             break;
         case 'tecnico':
-            header("Location: /SIGRA/public/tecnico/panel.php");
+            header("Location: /tecnico/panel.php");
             break;
         case 'admin':
-            header("Location: /SIGRA/public/admin/dashboard.php");
+            header("Location: /admin/dashboard.php");
             break;
     }
     exit();

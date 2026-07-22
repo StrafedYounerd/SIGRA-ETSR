@@ -30,7 +30,7 @@ function verificarSesion() {
         // El "../" depende de en qué carpeta esté la página que llama
         // a esta función. Se ajusta la ruta en cada página específica
         // (ver nota al final del archivo).
-        header("Location: /SIGRA/public/login.php");
+        header("Location: /login.php");
         exit(); // exit() es obligatorio: sin esto, el resto del script
                 // seguiría ejecutándose aunque ya mandamos la redirección.
     }
@@ -107,7 +107,7 @@ function cerrarSesion() {
     // session_destroy() elimina la sesión completa del servidor.
     session_destroy();
     // Redirige al login después de cerrar sesión.
-    header("Location: /SIGRA/public/login.php");
+    header("Location: /login.php");
     exit();
 }
 ?>
