@@ -7,6 +7,8 @@ services:
     restart: unless-stopped
     ports:
       - "8080:80"
+    environment:
+      TZ: America/Montevideo
     volumes:
       - ./:/var/www/html
     depends_on:
@@ -17,10 +19,11 @@ services:
     container_name: sigra-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: cambiar_esta_clave
-      MYSQL_DATABASE: sigra_etsr
-      MYSQL_USER: sigra_user
-      MYSQL_PASSWORD: cambiar_esta_clave_tambien
+      TZ: America/Montevideo
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - db-data:/var/lib/mysql
 
