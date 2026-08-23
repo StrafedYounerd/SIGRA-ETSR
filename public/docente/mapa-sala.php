@@ -15,17 +15,26 @@ if (!isset($_SESSION['id_sala'])) {
 }
 
 $consulta = $conexion->prepare(
-    "SELECT id_pc, etiqueta, fila, posicion, estado_actual
+    "SELECT id_pc, etiqueta, fila, posicion, estado_actual, tipo_equipo
      FROM pcs WHERE id_sala = ?
      ORDER BY fila ASC, posicion ASC"
 );
 $consulta->bind_param("i", $_SESSION['id_sala']);
 $consulta->execute();
-$resultado_pcs = $consulta->get_result();
+$resultado = $consulta->get_result();
 
 $pcs_por_fila = [1 => [], 2 => [], 3 => []];
-while ($pc = $resultado_pcs->fetch_assoc()) {
-    $pcs_por_fila[$pc['fila']][] = $pc;
+$switches = [];
+$tvs = []; // TV y Proyector
+
+while ($equipo = $resultado->fetch_assoc()) {
+    if ($equipo['tipo_equipo'] === 'PC') {
+        $pcs_por_fila[$equipo['fila']][] = $equipo;
+    } elseif ($equipo['tipo_equipo'] === 'Switch') {
+        $switches[] = $equipo;
+    } elseif ($equipo['tipo_equipo'] === 'TV' || $equipo['tipo_equipo'] === 'Proyector') {
+        $tvs[] = $equipo;
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -42,6 +51,7 @@ while ($pc = $resultado_pcs->fetch_assoc()) {
         <?php echo htmlspecialchars($_SESSION['nombre']); ?> (Docente) —
         <?php echo htmlspecialchars($_SESSION['nombre_sala']); ?> ·
         Grupo <?php echo htmlspecialchars($_SESSION['grupo']); ?>
+        <a href="javascript:history.back()">Volver atrás</a>
         <a href="../logout.php">Cerrar sesión</a>
         <a href="seleccionar-sala.php">Cambiar sala</a>
     </div>
@@ -50,7 +60,7 @@ while ($pc = $resultado_pcs->fetch_assoc()) {
         <h1><?php echo htmlspecialchars($_SESSION['nombre_sala']); ?></h1>
 
         <p style="font-size:13px; color:#555555;">
-            Hacé clic en una PC para reportar una falla.
+            Hacé clic en un equipo para reportar una falla.
             <span class="leyenda-color leyenda-funcional"></span> Funcional
             <span class="leyenda-color leyenda-falla"></span> Con falla
             <span class="leyenda-color leyenda-sin_eval"></span> No evaluada
@@ -63,12 +73,13 @@ while ($pc = $resultado_pcs->fetch_assoc()) {
              ============================================================ -->
 
         <!-- Fila superior: 3 PCs centradas -->
-<div class="fila-superior-tres">
+        <div class="fila-superior-tres">
             <?php foreach (array_reverse($pcs_por_fila[2]) as $pc): ?>
-                <div class="pc pc-<?php echo $pc['estado_actual']; ?>"
+                <div class="equipo pc <?= $pc['estado_actual']; ?>"
                      data-id-pc="<?php echo $pc['id_pc']; ?>"
                      data-etiqueta="<?php echo htmlspecialchars($pc['etiqueta']); ?>"
-                     data-estado="<?php echo $pc['estado_actual']; ?>">
+                     data-estado="<?php echo $pc['estado_actual']; ?>"
+                     data-tipo="<?php echo htmlspecialchars($pc['tipo_equipo']); ?>">
                     <?php echo htmlspecialchars($pc['etiqueta']); ?>
                 </div>
             <?php endforeach; ?>
@@ -77,10 +88,11 @@ while ($pc = $resultado_pcs->fetch_assoc()) {
         <div class="filas-inferiores-extremos">
             <div class="pata-izquierda">
                 <?php foreach ($pcs_por_fila[3] as $pc): ?>
-                    <div class="pc pc-<?php echo $pc['estado_actual']; ?>"
+                    <div class="equipo pc <?= $pc['estado_actual']; ?>"
                          data-id-pc="<?php echo $pc['id_pc']; ?>"
                          data-etiqueta="<?php echo htmlspecialchars($pc['etiqueta']); ?>"
-                         data-estado="<?php echo $pc['estado_actual']; ?>">
+                         data-estado="<?php echo $pc['estado_actual']; ?>"
+                         data-tipo="<?php echo htmlspecialchars($pc['tipo_equipo']); ?>">
                         <?php echo htmlspecialchars($pc['etiqueta']); ?>
                     </div>
                 <?php endforeach; ?>
@@ -88,14 +100,52 @@ while ($pc = $resultado_pcs->fetch_assoc()) {
 
             <div class="pata-derecha">
                 <?php foreach (array_reverse($pcs_por_fila[1]) as $pc): ?>
-                    <div class="pc pc-<?php echo $pc['estado_actual']; ?>"
+                    <div class="equipo pc <?= $pc['estado_actual']; ?>"
                          data-id-pc="<?php echo $pc['id_pc']; ?>"
                          data-etiqueta="<?php echo htmlspecialchars($pc['etiqueta']); ?>"
-                         data-estado="<?php echo $pc['estado_actual']; ?>">
+                         data-estado="<?php echo $pc['estado_actual']; ?>"
+                         data-tipo="<?php echo htmlspecialchars($pc['tipo_equipo']); ?>">
                         <?php echo htmlspecialchars($pc['etiqueta']); ?>
                     </div>
                 <?php endforeach; ?>
             </div>
+        </div>
+
+        <!-- Nuevos equipos: Switches y TVs/Proyectores -->
+        <div class="equipos-adicionales">
+            <?php if (!empty($switches)): ?>
+                <div class="bloque-switches">
+                    <h3>Switches</h3>
+                    <div class="contenedor-switches">
+                        <?php foreach ($switches as $switch): ?>
+                            <div class="equipo switch <?= $switch['estado_actual']; ?>"
+                                 data-id-pc="<?php echo $switch['id_pc']; ?>"
+                                 data-etiqueta="<?php echo htmlspecialchars($switch['etiqueta']); ?>"
+                                 data-estado="<?php echo $switch['estado_actual']; ?>"
+                                 data-tipo="<?php echo htmlspecialchars($switch['tipo_equipo']); ?>">
+                                <?php echo htmlspecialchars($switch['etiqueta']); ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($tvs)): ?>
+                <div class="bloque-tvs">
+                    <h3>TVs y Proyectores</h3>
+                    <div class="contenedor-tvs">
+                        <?php foreach ($tvs as $tv): ?>
+                            <div class="equipo tv <?= $tv['estado_actual']; ?>"
+                                 data-id-pc="<?php echo $tv['id_pc']; ?>"
+                                 data-etiqueta="<?php echo htmlspecialchars($tv['etiqueta']); ?>"
+                                 data-estado="<?php echo $tv['estado_actual']; ?>"
+                                 data-tipo="<?php echo htmlspecialchars($tv['tipo_equipo']); ?>">
+                                <?php echo htmlspecialchars($tv['etiqueta']); ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
 
         <!-- Modal de reporte de falla, oculto hasta que se haga clic en una PC -->
@@ -111,15 +161,12 @@ while ($pc = $resultado_pcs->fetch_assoc()) {
                     <input type="hidden" id="campo-id-pc">
 
                     <label for="campo-tipo-falla">Tipo de falla</label>
+                    <!-- Las opciones las carga mapa.js (cargarOpcionesFalla) según el
+                         tipo de equipo clickeado: PC tiene un listado, Switch/TV/Proyector
+                         otro distinto. Este placeholder solo cubre el instante antes del
+                         primer clic. -->
                     <select id="campo-tipo-falla">
                         <option value="">-- Elegí un tipo --</option>
-                        <option value="No enciende">No enciende</option>
-                        <option value="Falta mouse">Falta mouse</option>
-                        <option value="Falta teclado">Falta teclado</option>
-                        <option value="Sin internet">Sin internet</option>
-                        <option value="Pantalla rota">Pantalla rota</option>
-                        <option value="Falta de software">Falta de software</option>
-                        <option value="Otro">Otro</option>
                     </select>
 
                     <!-- Solo visible cuando el tipo es "Falta de software" u "Otro" -->

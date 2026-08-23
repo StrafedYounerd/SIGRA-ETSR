@@ -1,16 +1,15 @@
 <?php
 // ============================================================
 // SIGRA-ETSR · Componente B
-// public/tecnico/historial.php — CU-07: Ver historial completo
+// public/admin/historial.php — Historial completo (solo admin)
 // ============================================================
-// Implementa CU-07 de la ESRE. Accesible por técnico y admin.
-// Muestra TODOS los tickets (incluidos los solucionados), con
-// filtros opcionales por sala, PC, estado y rango de fechas.
+// Vista exclusiva para administradores que muestra el historial completo
+// de tickets con los mismos filtros que la versión técnica.
 
 require '../../includes/auth.php';
 require '../../config/db.php';
 
-requerirRol(['tecnico', 'admin']);
+requerirRol(['admin']); // Solo administradores pueden acceder
 
 // ── Leer los filtros desde la URL (GET) ──
 // Todos son opcionales: si vienen vacíos, no se aplica esa condición.
@@ -95,15 +94,14 @@ $salas_disponibles = $conexion->query("SELECT id_sala, nombre_sala FROM salas WH
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SIGRA-ETSR · Historial completo</title>
+    <title>SIGRA-ETSR · Historial completo (Administrador)</title>
     <link rel="stylesheet" href="../../css/estilos.css">
 </head>
 <body>
 
     <div class="barra-superior">
-        <?php echo htmlspecialchars($_SESSION['nombre']); ?>
-        (<?php echo $_SESSION['rol'] === 'admin' ? 'Administrador' : 'Técnico'; ?>)
-        <a href="panel.php">Volver al panel</a>
+        <?php echo htmlspecialchars($_SESSION['nombre']); ?> (Administrador)
+        <a href="dashboard.php">Volver al panel</a>
         <a href="../logout.php">Cerrar sesión</a>
     </div>
 

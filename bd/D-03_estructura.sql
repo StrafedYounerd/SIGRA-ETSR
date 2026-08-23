@@ -70,6 +70,7 @@ CREATE TABLE pcs (
   etiqueta       VARCHAR(20) NOT NULL,
   fila           INT(11) NOT NULL,
   posicion       INT(11) NOT NULL,
+  tipo_equipo    ENUM('PC', 'Switch', 'TV', 'Proyector') NOT NULL DEFAULT 'PC',
   estado_actual  ENUM('funcional', 'falla', 'sin_eval') NOT NULL DEFAULT 'sin_eval',
   PRIMARY KEY (id_pc),
   CONSTRAINT fk_pc_sala
@@ -217,15 +218,16 @@ INSERT INTO usuarios (nombre, usuario, contraseña, rol, activo) VALUES
 
 -- Carga la Sala 210, única sala piloto definida hasta el momento.
 INSERT INTO salas (nombre_sala, descripcion, activa) VALUES
-('Sala 210', 'Sala piloto del proyecto SIGRA-ETSR. 13 PCs en disposición de U invertida.', 1);
+('Sala 210', 'Sala piloto del proyecto SIGRA-ETSR. 12 PCs en disposición de U invertida.', 1);
 
--- Carga las 13 PCs de la Sala 210 respetando la disposición física real:
+-- Carga las PCs de la Sala 210 respetando la disposición física real:
 -- Fila 1: 5 PCs (posiciones 1 a 5)
 -- Fila 2: 3 PCs (posiciones 1 a 3)
 -- Fila 3: 5 PCs (posiciones 1 a 5)
 -- Todas nacen en estado 'sin_eval' porque todavía no se evaluó su estado real.
 
 INSERT INTO pcs (id_sala, etiqueta, fila, posicion, estado_actual) VALUES
+(1, 'PC-7296', 1, 1, 'sin_eval'),
 (1, 'PC-7288', 1, 2, 'sin_eval'),
 (1, 'PC-7291', 1, 3, 'sin_eval'),
 (1, 'PC-7283', 1, 4, 'sin_eval'),

@@ -44,8 +44,12 @@
     flex: 0 0 auto;
 }
 
-/* ── Cada PC individual ── */
-.pc {
+/* ── Cada equipo individual (PC, Switch, TV/Proyector) ──
+   El HTML aplica clases separadas por espacio: class="equipo pc funcional".
+   Por eso el color va en un modificador de estado aparte (.funcional /
+   .falla / .sin_eval), NO en una clase compuesta como ".pc-funcional"
+   (esa nunca matchea porque en el HTML son dos clases distintas). */
+.equipo {
     border: 1px solid #555555;
     padding: 10px 8px;
     text-align: center;
@@ -56,9 +60,13 @@
     min-height: 36px;
 }
 
-.pc-funcional { background-color: #b9e6b9; }
-.pc-falla     { background-color: #f0a8a8; }
-.pc-sin_eval  { background-color: #d9d9d9; }
+.equipo.funcional { background-color: #b9e6b9; }
+.equipo.falla     { background-color: #f0a8a8; }
+.equipo.sin_eval  { background-color: #d9d9d9; }
+
+.equipo:hover {
+    filter: brightness(0.92);
+}
 
 /* ── Leyenda ── */
 .leyenda-color {
@@ -98,4 +106,35 @@
 
 #mensaje-reporte {
     margin: 10px 0;
+}
+/* .switch y .tv heredan de .equipo (forma, tamaño, color de estado).
+   Se les agrega borde punteado solo para diferenciarlos a simple vista
+   de una PC dentro de sus propios bloques ("Switches" / "TVs y
+   Proyectores"), sin tocar la lógica de color que ya es común a los
+   tres tipos de equipo. */
+.switch, .tv {
+    border-style: dashed;
+}
+
+/* ── Bloques de Switches y TVs/Proyectores, debajo del mapa en U ──
+   text-align: center centra los títulos (h3); justify-content: center
+   en los contenedores centra las filas de equipos (antes quedaban
+   pegados a la izquierda por ser flex sin ese valor). */
+.equipos-adicionales {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.equipos-adicionales h3 {
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.contenedor-switches,
+.contenedor-tvs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
 }

@@ -75,6 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="barra-superior">
         <?php echo htmlspecialchars($_SESSION['nombre']); ?> (Docente)
+        <a href="javascript:history.back()">Volver atrás</a>
         <a href="../logout.php">Cerrar sesión</a>
     </div>
 

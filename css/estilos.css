@@ -14,7 +14,6 @@ body {
     padding: 20px;
 }
 
-/* ── Caja contenedora genérica (login, formularios) ── */
 .caja {
     background-color: #ffffff;
     border: 1px solid #999999;
@@ -29,7 +28,6 @@ h1, h2 {
     margin-bottom: 15px;
 }
 
-/* ── Formularios ── */
 label {
     display: block;
     margin-top: 10px;
@@ -65,7 +63,6 @@ input[type="submit"]:hover {
     background-color: #cccccc;
 }
 
-/* ── Mensajes de error y confirmación ── */
 .mensaje-error {
     background-color: #ffe0e0;
     border: 1px solid #cc0000;
@@ -84,7 +81,6 @@ input[type="submit"]:hover {
     font-size: 13px;
 }
 
-/* ── Tablas (se usan en panel del técnico, historial, admin) ── */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -102,7 +98,6 @@ th {
     background-color: #dddddd;
 }
 
-/* ── Barra superior simple con nombre de usuario y logout ── */
 .barra-superior {
     background-color: #333333;
     color: #ffffff;
@@ -113,4 +108,28 @@ th {
 .barra-superior a {
     color: #ffffff;
     margin-left: 15px;
+}
+
+/* ── Botones del Dashboard (grilla 2x2) ──
+   Los botones sueltos del resto del sitio ya tienen su tamaño natural
+   con margin-top: 15px (regla general de arriba). Esta grilla solo pisa
+   ese margen DENTRO de .menu-acciones (más específico, gana igual),
+   así los 4 botones del panel quedan parejos sin afectar el resto. */
+.menu-acciones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.menu-acciones a {
+    display: block;
+    width: 100%;
+}
+
+.menu-acciones button {
+    width: 100%;
+    height: 100%;
+    margin-top: 0;
+    box-sizing: border-box;
 }

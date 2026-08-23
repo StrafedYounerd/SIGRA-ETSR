@@ -3,11 +3,49 @@
 // js/mapa.js — Lógica del mapa interactivo (clic en PC + reporte)
 // ============================================================
 
+// ── Catálogos de fallas por tipo de equipo ──
+// Los "value" tienen que coincidir EXACTO con $tipos_validos en
+// public/docente/reportar-falla.php (el servidor es quien valida de
+// verdad; esto es solo para que el docente vea las opciones correctas
+// según lo que clickeó).
+const FALLAS_PC = [
+    "No enciende", "Falta mouse", "Falta teclado", "Sin internet",
+    "Pantalla rota", "Falta de software", "Otro"
+];
+
+const FALLAS_SWITCH_TV = [
+    "Sin alimentación / No prende", "Roto / Daño físico",
+    "No funcional / No da señal", "Equipo faltante", "Otro (especificar)"
+];
+
+// Tipos que, al elegirse, exigen que el docente escriba el detalle.
+const TIPOS_QUE_REQUIEREN_DETALLE = ["Falta de software", "Otro", "Otro (especificar)"];
+
+// ── Carga las opciones de falla correctas según el tipo de equipo clickeado ──
+function cargarOpcionesFalla(tipoEquipo) {
+    const select = document.getElementById("campo-tipo-falla");
+    const opciones = (tipoEquipo === "PC") ? FALLAS_PC : FALLAS_SWITCH_TV;
+
+    select.innerHTML = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "-- Elegí un tipo --";
+    select.appendChild(placeholder);
+
+    opciones.forEach(function (tipo) {
+        const opcion = document.createElement("option");
+        opcion.value = tipo;
+        opcion.textContent = tipo;
+        select.appendChild(opcion);
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
 
-    // ── Clic en cada PC del mapa ──
-    const celdasPC = document.querySelectorAll(".pc");
-    celdasPC.forEach(function (celda) {
+    // ── Clic en cada equipo del mapa (PC, Switch, TV/Proyector) ──
+    const celdas = document.querySelectorAll(".equipo");
+    celdas.forEach(function (celda) {
         celda.addEventListener("click", function () {
             abrirModalReporte(celda);
         });
@@ -17,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const selectTipo = document.getElementById("campo-tipo-falla");
     selectTipo.addEventListener("change", function () {
         const contenedorDetalle = document.getElementById("contenedor-detalle");
-        const requiereDetalle = (selectTipo.value === "Falta de software" || selectTipo.value === "Otro");
+        const requiereDetalle = TIPOS_QUE_REQUIEREN_DETALLE.includes(selectTipo.value);
         contenedorDetalle.style.display = requiereDetalle ? "block" : "none";
     });
 
@@ -48,10 +86,15 @@ function abrirModalReporte(celda) {
     const idPC      = celda.getAttribute("data-id-pc");
     const etiqueta  = celda.getAttribute("data-etiqueta");
     const estado    = celda.getAttribute("data-estado");
+    const tipoEquipo = celda.getAttribute("data-tipo");
 
     const infoPC           = document.getElementById("modal-pc-info");
     const mensaje          = document.getElementById("modal-mensaje");
     const bloqueFormulario = document.getElementById("modal-formulario");
+
+    // Cargamos el catálogo de fallas correcto ANTES de limpiar el select
+    // (PC tiene un listado, Switch/TV/Proyector otro distinto).
+    cargarOpcionesFalla(tipoEquipo);
 
     // Limpiamos mensajes y formulario de una apertura anterior.
     mensaje.innerHTML = "";
@@ -107,7 +150,7 @@ function enviarReporte() {
         mensaje.innerHTML = '<div class="mensaje-error">Seleccioná el tipo de falla</div>';
         return;
     }
-    if ((tipoFalla === "Falta de software" || tipoFalla === "Otro") && detalleTexto.trim() === "") {
+    if (TIPOS_QUE_REQUIEREN_DETALLE.includes(tipoFalla) && detalleTexto.trim() === "") {
         mensaje.innerHTML = '<div class="mensaje-error">Especificá el detalle de la falla</div>';
         return;
     }

@@ -3,8 +3,6 @@
 // SIGRA-ETSR · Componente B
 // public/admin/dashboard.php — Panel de administración
 // ============================================================
-// Punto de entrada del rol admin. Muestra un resumen rápido del
-// estado del sistema y accesos a las dos pantallas de gestión.
 
 require '../../includes/auth.php';
 require '../../config/db.php';
@@ -12,9 +10,9 @@ require '../../config/db.php';
 requerirRol(['admin']);
 
 // ── Contadores simples para el resumen ──
-$total_usuarios = $conexion->query("SELECT COUNT(*) AS total FROM usuarios WHERE activo = 1")->fetch_assoc()['total'];
-$total_salas    = $conexion->query("SELECT COUNT(*) AS total FROM salas WHERE activa = 1")->fetch_assoc()['total'];
-$total_pcs      = $conexion->query("SELECT COUNT(*) AS total FROM pcs")->fetch_assoc()['total'];
+$total_usuarios  = $conexion->query("SELECT COUNT(*) AS total FROM usuarios WHERE activo = 1")->fetch_assoc()['total'];
+$total_salas     = $conexion->query("SELECT COUNT(*) AS total FROM salas WHERE activa = 1")->fetch_assoc()['total'];
+$total_pcs       = $conexion->query("SELECT COUNT(*) AS total FROM pcs WHERE tipo_equipo = 'PC'")->fetch_assoc()['total'];
 $tickets_activos = $conexion->query("SELECT COUNT(*) AS total FROM tickets WHERE estado IN ('pendiente', 'en_reparacion')")->fetch_assoc()['total'];
 ?>
 <!DOCTYPE html>
@@ -22,12 +20,13 @@ $tickets_activos = $conexion->query("SELECT COUNT(*) AS total FROM tickets WHERE
 <head>
     <meta charset="UTF-8">
     <title>SIGRA-ETSR · Panel de administración</title>
-    <link rel="stylesheet" href="../../css/estilos.css">
+    <link rel="stylesheet" href="../css/estilos.css">
 </head>
 <body>
 
     <div class="barra-superior">
         <?php echo htmlspecialchars($_SESSION['nombre']); ?> (Administrador)
+        <a href="javascript:history.back()">Volver atrás</a>
         <a href="../logout.php">Cerrar sesión</a>
     </div>
 
@@ -53,11 +52,12 @@ $tickets_activos = $conexion->query("SELECT COUNT(*) AS total FROM tickets WHERE
             </tr>
         </table>
 
-        <p style="margin-top: 20px;">
+        <div class="menu-acciones">
             <a href="usuarios.php"><button type="button">Gestionar usuarios</button></a>
             <a href="salas.php"><button type="button">Gestionar salas y PCs</button></a>
-            <a href="../tecnico/historial.php"><button type="button">Ver historial completo</button></a>
-        </p>
+            <a href="historial.php"><button type="button">Ver historial completo</button></a>
+            <a href="estadisticas.php"><button type="button">Ver estadísticas</button></a>
+        </div>
     </div>
 
 </body>

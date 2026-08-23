@@ -67,17 +67,24 @@ if ($ticket_activo) {
 }
 
 // PASO 4: verificar que tipo_falla no está vacío.
-// Lista cerrada de tipos válidos (coincide con el D-04 actualizado:
-// sin "PC lenta", con "Falta de software").
-$tipos_validos = ['No enciende', 'Falta mouse', 'Falta teclado', 'Sin internet',
-                   'Pantalla rota', 'Falta de software', 'Otro'];
+// Lista de tipos válidos (incluye tipos para PC, Switch y TV/Proyector).
+$tipos_validos = [
+    // Para PC
+    'No enciende', 'Falta mouse', 'Falta teclado', 'Sin internet',
+    'Pantalla rota', 'Falta de software', 'Otro',
+    // Para Switch y TV/Proyector
+    'Sin alimentación / No prende', 'Roto / Daño físico',
+    'No funcional / No da señal', 'Equipo faltante', 'Otro (especificar)'
+];
 
 if ($tipo_falla === '' || !in_array($tipo_falla, $tipos_validos)) {
     responder(false, "Seleccioná un tipo de falla válido");
 }
 
 // PASO 5: verificar detalle_texto si el tipo lo requiere.
-if (($tipo_falla === 'Falta de software' || $tipo_falla === 'Otro') && $detalle_texto === '') {
+if (($tipo_falla === 'Falta de software' ||
+     $tipo_falla === 'Otro' ||
+     $tipo_falla === 'Otro (especificar)') && $detalle_texto === '') {
     responder(false, "Especificá el detalle de la falla");
 }
 

@@ -101,7 +101,6 @@ function redirigirSegunRol($rol) {
     <link rel="stylesheet" href="../css/estilos.css">
 </head>
 <body>
-
     <div class="caja">
         <h1>SIGRA-ETSR</h1>
         <p style="font-size:13px; color:#555555; margin-top:-10px;">
@@ -123,6 +122,5 @@ function redirigirSegunRol($rol) {
             <button type="submit">Ingresar</button>
         </form>
     </div>
-
 </body>
 </html>

@@ -47,6 +47,7 @@ $consulta = $conexion->query(
 
     <div class="barra-superior">
         <?php echo htmlspecialchars($_SESSION['nombre']); ?> (Técnico)
+        <a href="javascript:history.back()">Volver atrás</a>
         <a href="historial.php">Ver historial completo</a>
         <a href="../logout.php">Cerrar sesión</a>
     </div>
