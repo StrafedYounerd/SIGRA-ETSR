@@ -43,7 +43,7 @@ while ($equipo = $resultado->fetch_assoc()) {
     <meta charset="UTF-8">
     <title>SIGRA-ETSR · Mapa de sala</title>
     <link rel="stylesheet" href="../../css/estilos.css">
-    <link rel="stylesheet" href="../../css/mapa.css">
+    <link rel="stylesheet" href="../../css/mapa.css?v=1.1">
 </head>
 <body>
 

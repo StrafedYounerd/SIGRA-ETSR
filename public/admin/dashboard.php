@@ -20,7 +20,7 @@ $tickets_activos = $conexion->query("SELECT COUNT(*) AS total FROM tickets WHERE
 <head>
     <meta charset="UTF-8">
     <title>SIGRA-ETSR · Panel de administración</title>
-    <link rel="stylesheet" href="../css/estilos.css">
+    <link rel="stylesheet" href="../css/estilos.css?v=1.1">
 </head>
 <body>
 
