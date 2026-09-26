@@ -218,7 +218,7 @@ INSERT INTO usuarios (nombre, usuario, contraseña, rol, activo) VALUES
 
 -- Carga la Sala 210, única sala piloto definida hasta el momento.
 INSERT INTO salas (nombre_sala, descripcion, activa) VALUES
-('Sala 210', 'Sala piloto del proyecto SIGRA-ETSR. 12 PCs en disposición de U invertida.', 1);
+('Sala 210', 'Sala piloto del proyecto SIGRA-ETSR. 13 PCs en disposición de U invertida.', 1);
 
 -- Carga las PCs de la Sala 210 respetando la disposición física real:
 -- Fila 1: 5 PCs (posiciones 1 a 5)
