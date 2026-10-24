@@ -9,6 +9,7 @@
 
 require '../../includes/auth.php';
 require '../../config/db.php';
+require '../../includes/fotos.php';
 
 requerirRol(['docente']);
 
@@ -67,21 +68,40 @@ if ($ticket_activo) {
 }
 
 // PASO 4: verificar que tipo_falla no está vacío.
-// Lista cerrada de tipos válidos (coincide con el D-04 actualizado:
-// sin "PC lenta", con "Falta de software").
-$tipos_validos = ['No enciende', 'Falta mouse', 'Falta teclado', 'Sin internet',
-                   'Pantalla rota', 'Falta de software', 'Otro'];
+// Lista de tipos válidos (incluye tipos para PC, Switch y TV/Proyector).
+$tipos_validos = [
+    // Para PC
+    'No enciende', 'Falta mouse', 'Falta teclado', 'Sin internet',
+    'Pantalla rota', 'Falta de software', 'Otro',
+    // Para Switch y TV/Proyector
+    'Sin alimentación / No prende', 'Roto / Daño físico',
+    'No funcional / No da señal', 'Equipo faltante', 'Otro (especificar)'
+];
 
 if ($tipo_falla === '' || !in_array($tipo_falla, $tipos_validos)) {
     responder(false, "Seleccioná un tipo de falla válido");
 }
 
 // PASO 5: verificar detalle_texto si el tipo lo requiere.
-if (($tipo_falla === 'Falta de software' || $tipo_falla === 'Otro') && $detalle_texto === '') {
+if (($tipo_falla === 'Falta de software' ||
+     $tipo_falla === 'Otro' ||
+     $tipo_falla === 'Otro (especificar)') && $detalle_texto === '') {
     responder(false, "Especificá el detalle de la falla");
 }
 
-// PASO 6: insertar el ticket en la base de datos.
+// PASO 7 (opcional): guardar la foto adjunta si el docente eligió una.
+// Si la foto falla la validación, el reporte NO se registra: se le avisa
+// para que la quite o elija otra (evita tickets sin imagen a medias).
+$foto_archivo = null;
+if (isset($_FILES['foto']) && $_FILES['foto']['error'] !== UPLOAD_ERR_NO_FILE) {
+    $resultado_foto = validar_y_guardar_foto($_FILES['foto']);
+    if (isset($resultado_foto['error'])) {
+        responder(false, $resultado_foto['error']);
+    }
+    $foto_archivo = $resultado_foto['archivo'];
+}
+
+// PASO 8: insertar el ticket en la base de datos.
 // Usamos NOW() directo en el SQL, nunca una fecha que venga del navegador
 // (esto cumple la restricción R-04 del D-04: timestamp del servidor).
 $insertar = $conexion->prepare(
@@ -91,11 +111,22 @@ $insertar = $conexion->prepare(
 $insertar->bind_param("iiss", $id_pc, $_SESSION['id_usuario'], $tipo_falla, $detalle_texto);
 $insertar->execute();
 
-// PASO 7: actualizar el estado visual de la PC en el mapa.
+// PASO 9: actualizar el estado visual de la PC en el mapa.
 $actualizar_pc = $conexion->prepare("UPDATE pcs SET estado_actual = 'falla' WHERE id_pc = ?");
 $actualizar_pc->bind_param("i", $id_pc);
 $actualizar_pc->execute();
 
-// PASO 8: confirmar al docente.
+// PASO 10: registrar la foto (si la hay) asociada al ticket recién creado.
+if ($foto_archivo !== null) {
+    $id_ticket_nuevo = $insertar->insert_id;
+    $registrar_foto = $conexion->prepare(
+        "INSERT INTO fotos (id_pc, id_ticket, id_docente, tipo, archivo, fecha_subida)
+         VALUES (?, ?, ?, 'falla', ?, NOW())"
+    );
+    $registrar_foto->bind_param("iiis", $id_pc, $id_ticket_nuevo, $_SESSION['id_usuario'], $foto_archivo);
+    $registrar_foto->execute();
+}
+
+// PASO 11: confirmar al docente.
 responder(true, "Falla registrada correctamente. El técnico fue notificado.");
 ?>

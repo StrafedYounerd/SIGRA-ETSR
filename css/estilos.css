@@ -2,89 +2,165 @@
    SIGRA-ETSR · Componente B
    css/estilos.css — Estilos globales del sistema
    ============================================================
-   Estilo simple, funcional, sin sombras, sin bordes redondeados,
-   sin degradados ni transiciones. Colores planos, tipografía básica.
+   Consume las variables de theme.css (fuente única de la paleta).
+   Mantiene todas las clases históricas (.caja, .barra-superior,
+   .mensaje-ok/.mensaje-error, tablas, .menu-acciones) para no
+   romper ninguna vista existente; el rediseño es solo visual.
 */
 
+/* ── Base ── */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
-    color: #222222;
+    font-family: var(--fuente);
+    background-color: var(--color-fondo);
+    color: var(--color-texto);
     margin: 0;
     padding: 20px;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* ── Caja contenedora genérica (login, formularios) ── */
+/* ── Caja contenedora genérica (login, formularios, paneles) ── */
 .caja {
-    background-color: #ffffff;
-    border: 1px solid #999999;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
     max-width: 350px;
     margin: 60px auto;
-    padding: 20px;
+    padding: 28px;
+}
+
+/* Variantes de ancho de .caja: reemplazan los style="max-width:..."
+   inline que estaban repetidos en las vistas. */
+.caja-ancho-700 { max-width: 700px; }
+.caja-ancho-750 { max-width: 750px; }
+.caja-ancho-800 { max-width: 800px; }
+.caja-ancho-900 { max-width: 900px; }
+.caja-ancho-1200 { max-width: 1200px; }
+
+/* Contenedor de tarjetas de resumen del panel admin */
+.panel-resumen {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
 }
 
 h1, h2 {
-    font-size: 18px;
+    color: var(--color-primario);
     margin-top: 0;
     margin-bottom: 15px;
+}
+
+h1 {
+    font-size: 22px;
+    letter-spacing: -0.01em;
+}
+
+h2 {
+    font-size: 17px;
+}
+
+h3 {
+    color: var(--color-primario);
 }
 
 /* ── Formularios ── */
 label {
     display: block;
-    margin-top: 10px;
+    margin-top: 12px;
     font-size: 14px;
+    font-weight: 500;
+    color: var(--color-texto);
 }
 
 input[type="text"],
 input[type="password"],
+input[type="date"],
 select,
 textarea {
     width: 100%;
-    padding: 5px;
-    font-family: Arial, sans-serif;
+    padding: 8px 10px;
+    font-family: var(--fuente);
     font-size: 14px;
-    border: 1px solid #999999;
-    margin-top: 3px;
+    color: var(--color-texto);
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-chico);
+    margin-top: 4px;
     box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--color-acento);
+    box-shadow: 0 0 0 3px rgba(0, 196, 204, 0.22);
+}
+
+/* ── Botones ── */
 button,
 input[type="submit"] {
-    background-color: #dddddd;
-    border: 1px solid #999999;
-    padding: 8px 15px;
-    font-family: Arial, sans-serif;
+    background-color: var(--color-primario);
+    color: #ffffff;
+    border: 1px solid var(--color-primario);
+    border-radius: var(--radio-chico);
+    padding: 9px 16px;
+    font-family: var(--fuente);
     font-size: 14px;
+    font-weight: 600;
     margin-top: 15px;
     cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 button:hover,
 input[type="submit"]:hover {
-    background-color: #cccccc;
+    background-color: var(--color-primario-oscuro);
+    border-color: var(--color-primario-oscuro);
+}
+
+button:focus-visible,
+input[type="submit"]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 196, 204, 0.35);
+}
+
+/* Botones dentro de tablas y acciones puntuales: más compactos,
+   sin el margen superior de los botones de formulario. */
+table button,
+table input[type="submit"],
+form[style*="margin:0"] button {
+    margin-top: 0;
+    padding: 6px 12px;
+    font-size: 13px;
 }
 
 /* ── Mensajes de error y confirmación ── */
 .mensaje-error {
-    background-color: #ffe0e0;
-    border: 1px solid #cc0000;
-    color: #cc0000;
-    padding: 8px;
+    background-color: #fdeceb;
+    border: 1px solid #f0b6b2;
+    border-left: 4px solid #c62828;
+    color: #8f1d18;
+    border-radius: var(--radio-chico);
+    padding: 10px 12px;
     margin-bottom: 10px;
     font-size: 13px;
 }
 
 .mensaje-ok {
-    background-color: #e0ffe0;
-    border: 1px solid #007700;
-    color: #007700;
-    padding: 8px;
+    background-color: #e9f6ec;
+    border: 1px solid #b3ddb9;
+    border-left: 4px solid #1f7a3d;
+    color: #15572a;
+    border-radius: var(--radio-chico);
+    padding: 10px 12px;
     margin-bottom: 10px;
     font-size: 13px;
 }
 
-/* ── Tablas (se usan en panel del técnico, historial, admin) ── */
+/* ── Tablas (panel del técnico, historial, admin, estadísticas) ── */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -92,25 +168,134 @@ table {
 }
 
 th, td {
-    border: 1px solid #999999;
-    padding: 6px 8px;
+    border-bottom: 1px solid var(--color-borde-suave);
+    border-top: none;
+    padding: 9px 10px;
     text-align: left;
     font-size: 13px;
+    vertical-align: middle;
 }
 
 th {
-    background-color: #dddddd;
+    background-color: var(--color-superficie-alt);
+    color: var(--color-primario);
+    font-weight: 600;
+    border-bottom: 2px solid var(--color-borde);
 }
 
-/* ── Barra superior simple con nombre de usuario y logout ── */
+/* Filas alternadas + hover */
+tbody tr:nth-child(even),
+tr:nth-child(even) {
+    background-color: var(--color-superficie-alt);
+}
+
+tbody tr:hover,
+tr:hover {
+    background-color: #eef7f8;
+}
+
+/* Links de acción dentro de tablas (Editar / Desactivar / etc.) */
+td a {
+    color: var(--color-acento-texto);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+td a:hover {
+    text-decoration: underline;
+}
+
+/* ── Barra superior ── */
 .barra-superior {
-    background-color: #333333;
+    background-color: var(--color-primario);
     color: #ffffff;
-    padding: 8px 15px;
+    padding: 12px 20px;
     font-size: 14px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    box-shadow: var(--sombra);
 }
 
+/* Links de la barra: sin subrayado, hover con subrayado turquesa.
+   La negrita de usuario/rol la pone el markup nuevo (clases
+   .barra-usuario / .barra-rol) sin tocar los <a> históricos. */
 .barra-superior a {
     color: #ffffff;
-    margin-left: 15px;
+    margin-left: 18px;
+    text-decoration: none;
+    font-weight: 500;
+    opacity: 0.88;
+    padding: 4px 2px;
+    border-bottom: 2px solid transparent;
+    transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.barra-superior a:hover {
+    opacity: 1;
+    border-bottom-color: var(--color-acento);
+}
+
+/* ── Marca en la barra (logo + nombre del sistema) ── */
+.barra-marca {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    margin-right: 12px;
+}
+
+.barra-marca img {
+    height: 26px;
+    width: auto;
+    display: block;
+}
+
+/* ── Nombre y rol del usuario en la barra ──
+   El nombre va en <strong>; el rol queda en peso normal para
+   jerarquizar (nombre destacado, rol secundario). */
+.barra-usuario {
+    margin-right: auto;   /* empuja los links hacia la derecha */
+    opacity: 0.95;
+}
+
+.barra-usuario strong {
+    font-weight: 700;
+}
+
+/* ── Enlaces sueltos fuera de la barra (ej: "Limpiar filtros") ── */
+form a {
+    color: var(--color-acento-texto);
+}
+
+/* ── Separadores horizontales ── */
+hr {
+    border: none;
+    border-top: 1px solid var(--color-borde);
+    margin: 22px 0;
+}
+
+/* ── Responsive: pantallas chicas ── */
+@media (max-width: 640px) {
+    body {
+        padding: 10px;
+    }
+
+    .caja {
+        margin: 16px auto;
+        padding: 18px;
+        max-width: 100%;
+        overflow-x: auto;   /* tablas anchas scrollean dentro de la caja */
+    }
+
+    .barra-superior {
+        padding: 10px 12px;
+    }
+
+    .barra-superior a {
+        margin-left: 0;
+        margin-right: 14px;
+    }
 }

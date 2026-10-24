@@ -95,19 +95,27 @@ $salas_disponibles = $conexion->query("SELECT id_sala, nombre_sala FROM salas WH
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIGRA-ETSR · Historial completo</title>
-    <link rel="stylesheet" href="../../css/estilos.css">
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="stylesheet" href="/css/estilos.css?v=4">
 </head>
 <body>
 
     <div class="barra-superior">
-        <?php echo htmlspecialchars($_SESSION['nombre']); ?>
-        (<?php echo $_SESSION['rol'] === 'admin' ? 'Administrador' : 'Técnico'; ?>)
+        <span class="barra-marca">
+            <img src="img/logo-accessnet.png" alt="Logo de AccessNet">
+            SIGRA-ETSR
+        </span>
+        <span class="barra-usuario">
+            <strong><?php echo htmlspecialchars($_SESSION['nombre']); ?></strong> ·
+            <?php echo $_SESSION['rol'] === 'admin' ? 'Administrador' : 'Técnico'; ?>
+        </span>
         <a href="panel.php">Volver al panel</a>
         <a href="../logout.php">Cerrar sesión</a>
     </div>
 
-    <div class="caja" style="max-width: 900px;">
+    <div class="caja caja-ancho-900">
         <h1>Historial completo de tickets</h1>
 
         <!-- ── Formulario de filtros (GET, para que la URL sea compartible) ── -->

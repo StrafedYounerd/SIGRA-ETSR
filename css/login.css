@@ -1,0 +1,164 @@
+/* ============================================================
+   SIGRA-ETSR · css/login.css — Pantalla de ingreso (split)
+   ============================================================
+   Igual a la maqueta: panel navy a la izquierda con la red
+   animada en canvas + titular; formulario a la derecha.
+   En pantallas angostas se apila (marca arriba, form abajo).
+*/
+
+.login {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ── Panel de marca (izquierda, navy con canvas) ── */
+.login-marca {
+    flex: 1.15;
+    background-color: var(--color-primario);
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    padding: 56px;
+}
+
+.login-marca canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.login-marca .texto {
+    position: relative;
+    max-width: 30rem;
+}
+
+.login-marca h1 {
+    font-size: clamp(2.4rem, 4.4vw, 3.6rem);
+    line-height: 1.02;
+    margin: 0 0 14px;
+    letter-spacing: -0.025em;
+    font-weight: 800;
+    color: #fff;
+}
+
+.login-marca p {
+    margin: 0;
+    color: #b8cdd9;
+    font-size: 1.05rem;
+    line-height: 1.5;
+}
+
+.login-marca .pausa {
+    position: absolute;
+    top: 18px;
+    left: 20px;
+    z-index: 2;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #d6e4ec;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+/* ── Formulario (derecha, blanco) ── */
+.login-form {
+    flex: 1;
+    background-color: var(--color-superficie);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 48px clamp(28px, 6vw, 88px);
+}
+
+/* Relación de tamaños de la maqueta: AccessNet 36px, ETSR 46px,
+   divisor fino entre ambos. Sin fondo blanco ni borde en el logo:
+   el PNG ya es transparente. */
+.marcas {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 40px;
+}
+
+.marcas img {
+    display: block;
+}
+
+.marcas .logo-accessnet { height: 36px; width: auto; }
+.marcas .logo-etsr      { height: 46px; width: auto; }
+
+.marcas i {
+    width: 1px;
+    height: 38px;
+    background-color: var(--color-borde);
+}
+
+.login-form h2 {
+    margin: 0 0 4px;
+    font-size: 1.5rem;
+    color: var(--color-primario);
+}
+
+.login-form .sub {
+    margin: 0 0 24px;
+    color: var(--color-texto-suave);
+    font-size: 0.95rem;
+}
+
+.campo {
+    display: block;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.campo input {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    padding: 11px 12px;
+    font: inherit;
+    font-weight: 400;
+    border: 1px solid var(--color-borde);
+    border-radius: 6px;
+    background-color: #fff;
+    color: var(--color-texto);
+}
+
+.campo input:focus {
+    outline: none;
+    border-color: var(--color-acento);
+    box-shadow: 0 0 0 3px rgba(0, 196, 204, 0.25);
+}
+
+.btn {
+    background-color: var(--color-primario);
+    color: #fff;
+    border: 0;
+    border-radius: 6px;
+    padding: 11px 20px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn:hover { background-color: var(--color-primario-oscuro); }
+
+.pie-login {
+    margin-top: 36px;
+    color: var(--color-texto-suave);
+    font-size: 0.85rem;
+}
+
+/* ── Responsive: apilar (marca arriba, form abajo) ── */
+@media (max-width: 900px) {
+    .login { flex-direction: column; }
+    .login-marca { min-height: 240px; padding: 28px; }
+}

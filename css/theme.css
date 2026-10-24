@@ -1,0 +1,197 @@
+/* ============================================================
+   SIGRA-ETSR · Componente B
+   css/theme.css — Tokens de diseño (fuente única de la paleta)
+   ============================================================
+   Paleta oficial AccessNet: navy #003852 + turquesa #00c4cc.
+   Cambiar cualquier color acá se propaga a todo el sistema
+   (estilos.css y mapa.css consumen estas variables).
+
+   Regla de uso:
+   - --color-primario (navy): barra superior, títulos, botones
+     principales, texto de encabezado.
+   - --color-acento (turquesa): foco de formularios, detalles,
+     estados activos. NUNCA como color de texto sobre blanco
+     (no cumple contraste AA) ni en el mapa de estados.
+   - Verde/rojo/gris del mapa son del requerimiento RNF01 y
+     viven en mapa.css, no acá.
+*/
+
+:root {
+    /* Marca */
+    --color-primario: #003852;
+    --color-primario-oscuro: #002a3d;
+    --color-acento: #00c4cc;
+    --color-acento-texto: #00707a;   /* turquesa oscurecido para texto/links sobre blanco (AA) */
+
+    /* Superficies y texto */
+    --color-fondo: #eef2f6;
+    --color-superficie: #ffffff;
+    --color-superficie-alt: #f7fafc;
+    --color-texto: #1b2b36;
+    --color-texto-suave: #51626f;
+    --color-borde: #d3dce4;
+    --color-borde-suave: #e4eaf0;
+
+    /* Estados de ticket (presentación; los valores internos
+       'pendiente'/'en_reparacion'/'solucionado' no cambian) */
+    --estado-pendiente-fondo: #fdf3d7;
+    --estado-pendiente-texto: #7a5b00;
+    --estado-pendiente-borde: #e6cf8a;
+    --estado-reparacion-fondo: #ddebfd;
+    --estado-reparacion-texto: #0b4f9e;
+    --estado-reparacion-borde: #a9c8ef;
+    --estado-solucionado-fondo: #dcf2e1;
+    --estado-solucionado-texto: #1a6b34;
+    --estado-solucionado-borde: #a3d9b4;
+
+    /* Estados de sala (activo/inactivo) */
+    --estado-activo-fondo: #dcf2e1;
+    --estado-activo-texto: #1a6b34;
+    --estado-inactivo-fondo: #e8ebee;
+    --estado-inactivo-texto: #56626c;
+
+    /* Acciones */
+    --peligro-texto: #b3261e;   /* botones "Eliminar", "Desactivar" */
+    --exito-texto: #1f7a3d;
+
+    /* Geometría */
+    --radio: 8px;
+    --radio-chico: 5px;
+    --sombra: 0 1px 3px rgba(0, 42, 61, 0.08), 0 4px 14px rgba(0, 42, 61, 0.06);
+    --sombra-hover: 0 2px 6px rgba(0, 42, 61, 0.12), 0 8px 22px rgba(0, 42, 61, 0.10);
+
+    /* Tipografía (solo fuentes del sistema: la intranet no tiene internet) */
+    --fuente: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --fuente-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ============================================================
+   Componentes compartidos (los usan varias vistas)
+   ============================================================ */
+
+/* ── Badge de estado de ticket ──
+   El texto interno ('pendiente'/'en_reparacion'/'solucionado')
+   no cambia: el mapeo a "Pendiente"/"En reparación"/"Solucionado"
+   se hace en la capa de presentación (PHP/HTML), el badge solo
+   pinta. Colores AA sobre sus fondos. */
+.badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.badge-pendiente {
+    background-color: var(--estado-pendiente-fondo);
+    color: var(--estado-pendiente-texto);
+    border: 1px solid var(--estado-pendiente-borde);
+}
+
+.badge-reparacion {
+    background-color: var(--estado-reparacion-fondo);
+    color: var(--estado-reparacion-texto);
+    border: 1px solid var(--estado-reparacion-borde);
+}
+
+.badge-solucionado {
+    background-color: var(--estado-solucionado-fondo);
+    color: var(--estado-solucionado-texto);
+    border: 1px solid var(--estado-solucionado-borde);
+}
+
+/* Badge de sala/usuario activo/inactivo */
+.badge-activo {
+    background-color: var(--estado-activo-fondo);
+    color: var(--estado-activo-texto);
+    border: 1px solid var(--estado-solucionado-borde);
+}
+
+.badge-inactivo {
+    background-color: var(--estado-inactivo-fondo);
+    color: var(--estado-inactivo-texto);
+    border: 1px solid var(--color-borde);
+}
+
+/* ── Botones de acción diferenciados ──
+   En el panel del técnico, "Marcar en reparación" y "Marcar
+   solucionado" no pueden verse iguales: uno avanza el flujo,
+   el otro lo cierra. */
+.btn-secundario {
+    background-color: #0b4f9e;
+    border-color: #0b4f9e;
+}
+
+.btn-secundario:hover {
+    background-color: #093f7e;
+    border-color: #093f7e;
+}
+
+.btn-exito {
+    background-color: var(--exito-texto);
+    border-color: var(--exito-texto);
+}
+
+.btn-exito:hover {
+    background-color: #166030;
+    border-color: #166030;
+}
+
+/* Enlaces de acción peligrosa (Desactivar, Eliminar) en tablas */
+.enlace-peligro {
+    color: var(--peligro-texto) !important;
+}
+
+/* ── Tarjetas de resumen del panel admin ── */
+.tarjeta-resumen {
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-top: 3px solid var(--color-acento);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    padding: 16px 18px;
+    flex: 1 1 140px;
+    min-width: 140px;
+}
+
+.tarjeta-resumen .tarjeta-cifra {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--color-primario);
+    line-height: 1.1;
+}
+
+.tarjeta-resumen .tarjeta-etiqueta {
+    font-size: 13px;
+    color: var(--color-texto-suave);
+    margin-top: 4px;
+}
+
+/* ── Login: encabezado con marcas ── */
+.login-marcas {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 6px;
+}
+
+.login-marcas img {
+    max-height: 52px;
+    width: auto;
+}
+
+.login-marcas .marca-divisor {
+    width: 1px;
+    height: 40px;
+    background-color: var(--color-borde);
+}
+
+.login-subtitulo {
+    text-align: center;
+    font-size: 13px;
+    color: var(--color-texto-suave);
+    margin: 0 0 18px 0;
+}

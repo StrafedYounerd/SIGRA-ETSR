@@ -97,32 +97,139 @@ function redirigirSegunRol($rol) {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIGRA-ETSR · Iniciar sesión</title>
-    <link rel="stylesheet" href="../css/estilos.css">
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="stylesheet" href="/css/estilos.css?v=4">
+    <link rel="stylesheet" href="/css/login.css?v=1">
 </head>
-<body>
+<body class="cuerpo-login">
 
-    <div class="caja">
-        <h1>SIGRA-ETSR</h1>
-        <p style="font-size:13px; color:#555555; margin-top:-10px;">
-            Sistema de Gestión y Relevamiento de Aulas
-        </p>
+<div class="login">
+
+    <!-- Panel de marca: navy con la red animada (canvas) y el titular.
+         La animación se puede pausar; con prefers-reduced-motion queda estática. -->
+    <div class="login-marca">
+        <canvas id="red" aria-hidden="true"></canvas>
+        <button class="pausa" id="pausa" type="button">Pausar movimiento</button>
+        <div class="texto">
+            <h1>La sala, a la vista antes de empezar la clase.</h1>
+            <p>Reportá fallas en un toque y seguí cada arreglo hasta que el equipo vuelve a funcionar.</p>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="login-form">
+        <div class="marcas">
+            <img src="/img/logo-accessnet.png" alt="Logo de AccessNet" class="logo-accessnet">
+            <i></i>
+            <img src="/img/logo-etsr.png" alt="Logo de la Escuela Técnica Superior de Rivera (UTU)" class="logo-etsr">
+        </div>
+        <h2>SIGRA-ETSR</h2>
+        <p class="sub">Sistema de gestión y relevamiento de aulas</p>
 
         <?php if ($error !== ''): ?>
             <div class="mensaje-error"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
 
         <form method="POST" action="login.php">
-            <label for="usuario">Usuario</label>
-            <input type="text" id="usuario" name="usuario"
-                   value="<?php echo htmlspecialchars($usuario ?? ''); ?>">
-
-            <label for="contraseña">Contraseña</label>
-            <input type="password" id="contraseña" name="contraseña">
-
-            <button type="submit">Ingresar</button>
+            <label class="campo">Usuario
+                <input type="text" id="usuario" name="usuario" autocomplete="username"
+                       value="<?php echo htmlspecialchars($usuario ?? ''); ?>">
+            </label>
+            <label class="campo">Contraseña
+                <input type="password" id="contraseña" name="contraseña" autocomplete="current-password">
+            </label>
+            <button class="btn" type="submit">Ingresar</button>
         </form>
+        <p class="pie-login">Desarrollado por AccessNet S.R.L. para la Escuela Técnica Superior de Rivera.</p>
     </div>
+
+</div>
+
+<script>
+/* Red animada del panel de marca (igual a la maqueta):
+   nodos turquesa que derivan, se enlazan entre sí y sueltan
+   paquetes. Se pausa con el botón; con prefers-reduced-motion
+   arranca estático. */
+(function () {
+    var cv = document.getElementById("red"), cx = cv.getContext("2d");
+    var run = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var W = 0, H = 0, N = [], P = [], raf;
+
+    function size() {
+        var r = cv.getBoundingClientRect();
+        if (!r.width) return;
+        var d = window.devicePixelRatio || 1;
+        W = r.width; H = r.height;
+        cv.width = W * d; cv.height = H * d;
+        cx.setTransform(d, 0, 0, d, 0, 0);
+        var n = Math.round(Math.min(46, W * H / 16000));
+        N = [];
+        for (var i = 0; i < n; i++) {
+            N.push({
+                x: Math.random() * W, y: Math.random() * H,
+                vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25
+            });
+        }
+        P = [];
+        frame(true);
+    }
+
+    function frame(once) {
+        cx.clearRect(0, 0, W, H);
+        N.forEach(function (a) {
+            if (run && !once) {
+                a.x += a.vx; a.y += a.vy;
+                if (a.x < 0 || a.x > W) a.vx *= -1;
+                if (a.y < 0 || a.y > H) a.vy *= -1;
+            }
+        });
+        var L = [];
+        for (var i = 0; i < N.length; i++) {
+            for (var j = i + 1; j < N.length; j++) {
+                var dx = N[i].x - N[j].x, dy = N[i].y - N[j].y;
+                var d = Math.hypot(dx, dy);
+                if (d < 150) {
+                    L.push([i, j]);
+                    cx.strokeStyle = "rgba(0,196,204," + (.34 * (1 - d / 150)) + ")";
+                    cx.lineWidth = 1;
+                    cx.beginPath(); cx.moveTo(N[i].x, N[i].y); cx.lineTo(N[j].x, N[j].y); cx.stroke();
+                }
+            }
+        }
+        if (run && !once && L.length && Math.random() < .06) {
+            P.push({ l: L[Math.floor(Math.random() * L.length)], t: 0 });
+        }
+        P = P.filter(function (p) { return p.t < 1; });
+        P.forEach(function (p) {
+            p.t += .018;
+            var a = N[p.l[0]], b = N[p.l[1]];
+            cx.fillStyle = "#00c4cc";
+            cx.beginPath();
+            cx.arc(a.x + (b.x - a.x) * p.t, a.y + (b.y - a.y) * p.t, 2.6, 0, 7);
+            cx.fill();
+        });
+        N.forEach(function (a) {
+            cx.fillStyle = "rgba(0,196,204,.85)";
+            cx.beginPath(); cx.arc(a.x, a.y, 2.4, 0, 7); cx.fill();
+        });
+        if (!once && run) raf = requestAnimationFrame(function () { frame(); });
+    }
+
+    document.getElementById("pausa").addEventListener("click", function () {
+        run = !run;
+        this.textContent = run ? "Pausar movimiento" : "Reanudar movimiento";
+        if (run) frame();
+    });
+    window.addEventListener("resize", size);
+    document.addEventListener("visibilitychange", function () {
+        cancelAnimationFrame(raf);
+        if (!document.hidden && run) frame();
+    });
+    size();
+})();
+</script>
 
 </body>
 </html>

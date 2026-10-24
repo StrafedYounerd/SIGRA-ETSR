@@ -6,6 +6,7 @@
 
 require '../../includes/auth.php';
 require '../../config/db.php';
+require '../../includes/ui.php';
 
 requerirRol(['docente']);
 
@@ -15,136 +16,162 @@ if (!isset($_SESSION['id_sala'])) {
 }
 
 $consulta = $conexion->prepare(
-    "SELECT id_pc, etiqueta, fila, posicion, estado_actual
+    "SELECT id_pc, etiqueta, fila, posicion, estado_actual, tipo_equipo
      FROM pcs WHERE id_sala = ?
      ORDER BY fila ASC, posicion ASC"
 );
 $consulta->bind_param("i", $_SESSION['id_sala']);
 $consulta->execute();
-$resultado_pcs = $consulta->get_result();
+$resultado = $consulta->get_result();
+
+// Mapeo SOLO de presentación: el estado interno ('funcional'/'falla'/'sin_eval')
+// no cambia; esto agrega un indicador textual para no depender solo del color (RNF01).
+$indicadores = ['funcional' => 'OK', 'falla' => 'FALLA', 'sin_eval' => '?'];
 
 $pcs_por_fila = [1 => [], 2 => [], 3 => []];
-while ($pc = $resultado_pcs->fetch_assoc()) {
-    $pcs_por_fila[$pc['fila']][] = $pc;
+$switches = [];
+$tvs = []; // TV y Proyector
+
+while ($equipo = $resultado->fetch_assoc()) {
+    if ($equipo['tipo_equipo'] === 'PC') {
+        $pcs_por_fila[$equipo['fila']][] = $equipo;
+    } elseif ($equipo['tipo_equipo'] === 'Switch') {
+        $switches[] = $equipo;
+    } elseif ($equipo['tipo_equipo'] === 'TV' || $equipo['tipo_equipo'] === 'Proyector') {
+        $tvs[] = $equipo;
+    }
+}
+
+// ── Reportes activos de esta sala (para el listado del cajón) ──
+// JOIN con tickets abiertos por PC. Solo lectura: alimenta el panel lateral.
+$reportes_activos = [];
+$consulta_activos = $conexion->prepare(
+    "SELECT t.id_ticket, t.tipo_falla, t.estado, t.fecha_reporte, t.id_pc,
+            p.etiqueta
+     FROM tickets t
+     INNER JOIN pcs p ON t.id_pc = p.id_pc
+     WHERE p.id_sala = ? AND t.estado IN ('pendiente', 'en_reparacion')
+     ORDER BY t.fecha_reporte ASC"
+);
+$consulta_activos->bind_param("i", $_SESSION['id_sala']);
+$consulta_activos->execute();
+$resultado_activos = $consulta_activos->get_result();
+while ($rep = $resultado_activos->fetch_assoc()) {
+    $reportes_activos[$rep['id_pc']] = $rep;
+}
+
+// ── Fotos existentes de esta sala (últimas 20) para el listado del cajón ──
+// Si la migración bd/migracion_fotos.sql todavía no se aplicó, la tabla
+// fotos no existe: la consulta falla y el sistema degrada sin fotos.
+$fotos_sala = [];
+$fotos_disponibles = false;
+$consulta_fotos = @$conexion->prepare(
+    "SELECT f.id_foto, f.tipo, f.archivo, f.fecha_subida, f.id_pc, p.etiqueta
+     FROM fotos f
+     LEFT JOIN pcs p ON f.id_pc = p.id_pc
+     WHERE p.id_sala = ? OR f.id_pc IS NULL
+     ORDER BY f.fecha_subida DESC
+     LIMIT 20"
+);
+if ($consulta_fotos) {
+    $consulta_fotos->bind_param("i", $_SESSION['id_sala']);
+    $consulta_fotos->execute();
+    $resultado_fotos = $consulta_fotos->get_result();
+    while ($foto = $resultado_fotos->fetch_assoc()) {
+        $fotos_sala[] = $foto;
+    }
+    $fotos_disponibles = true;
 }
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIGRA-ETSR · Mapa de sala</title>
-    <link rel="stylesheet" href="../../css/estilos.css">
-    <link rel="stylesheet" href="../../css/mapa.css">
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="stylesheet" href="/css/estilos.css?v=4">
+    <link rel="stylesheet" href="/css/mapa.css?v=6">
 </head>
-<body>
+<body class="cuerpo-app">
 
-    <div class="barra-superior">
-        <?php echo htmlspecialchars($_SESSION['nombre']); ?> (Docente) —
-        <?php echo htmlspecialchars($_SESSION['nombre_sala']); ?> ·
-        Grupo <?php echo htmlspecialchars($_SESSION['grupo']); ?>
-        <a href="../logout.php">Cerrar sesión</a>
-        <a href="seleccionar-sala.php">Cambiar sala</a>
-    </div>
+<div class="app">
 
-    <div class="caja" style="max-width: 750px;">
-        <h1><?php echo htmlspecialchars($_SESSION['nombre_sala']); ?></h1>
-
-        <p style="font-size:13px; color:#555555;">
-            Hacé clic en una PC para reportar una falla.
-            <span class="leyenda-color leyenda-funcional"></span> Funcional
-            <span class="leyenda-color leyenda-falla"></span> Con falla
-            <span class="leyenda-color leyenda-sin_eval"></span> No evaluada
-        </p>
-
-        <div id="mensaje-reporte"></div>
-
-        <!-- ============================================================
-             DISPOSICIÓN EN U: 3 ARRIBA (centradas), 5 ABAJO (extremos)
-             ============================================================ -->
-
-        <!-- Fila superior: 3 PCs centradas -->
-<div class="fila-superior-tres">
-            <?php foreach (array_reverse($pcs_por_fila[2]) as $pc): ?>
-                <div class="pc pc-<?php echo $pc['estado_actual']; ?>"
-                     data-id-pc="<?php echo $pc['id_pc']; ?>"
-                     data-etiqueta="<?php echo htmlspecialchars($pc['etiqueta']); ?>"
-                     data-estado="<?php echo $pc['estado_actual']; ?>">
-                    <?php echo htmlspecialchars($pc['etiqueta']); ?>
-                </div>
-            <?php endforeach; ?>
+    <aside class="rail">
+        <div class="marca">
+            <span class="tile"><img src="/img/logo-accessnet.png" alt="AccessNet"></span>
+            <span class="sis">SIGRA-ETSR</span>
         </div>
-
-        <div class="filas-inferiores-extremos">
-            <div class="pata-izquierda">
-                <?php foreach ($pcs_por_fila[3] as $pc): ?>
-                    <div class="pc pc-<?php echo $pc['estado_actual']; ?>"
-                         data-id-pc="<?php echo $pc['id_pc']; ?>"
-                         data-etiqueta="<?php echo htmlspecialchars($pc['etiqueta']); ?>"
-                         data-estado="<?php echo $pc['estado_actual']; ?>">
-                        <?php echo htmlspecialchars($pc['etiqueta']); ?>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-
-            <div class="pata-derecha">
-                <?php foreach (array_reverse($pcs_por_fila[1]) as $pc): ?>
-                    <div class="pc pc-<?php echo $pc['estado_actual']; ?>"
-                         data-id-pc="<?php echo $pc['id_pc']; ?>"
-                         data-etiqueta="<?php echo htmlspecialchars($pc['etiqueta']); ?>"
-                         data-estado="<?php echo $pc['estado_actual']; ?>">
-                        <?php echo htmlspecialchars($pc['etiqueta']); ?>
-                    </div>
-                <?php endforeach; ?>
-            </div>
+        <nav aria-label="Principal">
+            <a href="/docente/mapa-sala.php" aria-current="page">Mi sala</a>
+            <a href="/docente/seleccionar-sala.php">Cambiar sala</a>
+        </nav>
+        <div class="usuario">
+            <b><?php echo htmlspecialchars($_SESSION['nombre']); ?></b>Docente<br>
+            <a href="/logout.php">Cerrar sesión</a>
         </div>
+    </aside>
 
-        <!-- Modal de reporte de falla, oculto hasta que se haga clic en una PC -->
-        <div id="modal-reporte" class="modal-oculto">
-            <div class="modal-caja">
-                <h2>Reportar falla</h2>
-                <p id="modal-pc-info"></p>
+    <div class="principal">
+        <header class="contexto">
+            <h1><?php echo htmlspecialchars($_SESSION['nombre_sala']); ?></h1>
+            <span class="dato">Grupo <b><?php echo htmlspecialchars($_SESSION['grupo']); ?></b></span>
+            <span class="vivo" aria-live="off">Actualizado hace <b id="hace">0</b> s</span>
+        </header>
 
-                <div id="modal-mensaje"></div>
-
-                <!-- Este bloque se oculta si la PC ya tiene un ticket activo -->
-                <div id="modal-formulario">
-                    <input type="hidden" id="campo-id-pc">
-
-                    <label for="campo-tipo-falla">Tipo de falla</label>
-                    <select id="campo-tipo-falla">
-                        <option value="">-- Elegí un tipo --</option>
-                        <option value="No enciende">No enciende</option>
-                        <option value="Falta mouse">Falta mouse</option>
-                        <option value="Falta teclado">Falta teclado</option>
-                        <option value="Sin internet">Sin internet</option>
-                        <option value="Pantalla rota">Pantalla rota</option>
-                        <option value="Falta de software">Falta de software</option>
-                        <option value="Otro">Otro</option>
-                    </select>
-
-                    <!-- Solo visible cuando el tipo es "Falta de software" u "Otro" -->
-                    <div id="contenedor-detalle" style="display:none;">
-                        <label for="campo-detalle">Detalle</label>
-                        <textarea id="campo-detalle" rows="3"
-                                  placeholder="Ej: falta instalar Python"></textarea>
-                    </div>
-
-                    <button type="button" id="btn-confirmar-reporte">Confirmar reporte</button>
+        <div class="sala">
+            <div class="plano">
+                <!-- Leyenda RNF01: verde = funcional, rojo = con falla, gris = no evaluada.
+                     Los colores están fijados en mapa.css y NUNCA se tocan. -->
+                <div class="leyenda" role="note" aria-label="Leyenda de estados">
+                    <span><i class="leyenda-color leyenda-funcional"></i>Funcional</span>
+                    <span><i class="leyenda-color leyenda-falla"></i>Con falla</span>
+                    <span><i class="leyenda-color leyenda-sin_eval"></i>No evaluada</span>
                 </div>
 
-                <button type="button" id="btn-cerrar-modal">Cerrar</button>
+                <!-- Plano SVG: lo dibuja mapa.js a partir del JSON #datos-sala.
+                     La puerta va abajo a la derecha (junto al switch) y en el
+                     frente el pizarrón queda a la izquierda y la TV a la derecha. -->
+                <svg id="plano" viewBox="0 0 900 620" role="group"
+                     aria-label="Plano de la sala <?php echo htmlspecialchars($_SESSION['nombre_sala']); ?>"></svg>
             </div>
-        </div>
 
+            <!-- Cajón lateral: reemplaza al modal. mapa.js pinta acá el
+                 resumen de reportes, el detalle del equipo o el formulario. -->
+            <aside class="cajon" id="cajon" aria-live="polite"></aside>
+        </div>
     </div>
 
-    <!--
-        IMPORTANTE: el "?v=2" al final de la URL es un parámetro de
-        cache-busting. Cada vez que modifiques mapa.js y los cambios
-        no se reflejen en el navegador, subí este número (v=3, v=4...)
-        para forzar a que el navegador descargue la versión nueva en
-        vez de usar una copia vieja guardada en caché.
-    -->
-    <script src="../../js/mapa.js?v=2"></script>
+</div>
+
+<!-- Mensaje flotante para confirmaciones -->
+<div class="toast" id="toast" role="status"></div>
+
+<!-- ============================================================
+     DATOS PARA MAPA.JS
+     El PHP de arriba (consultas) serializa su resultado acá;
+     mapa.js trabaja SOLO con este JSON. No hay lógica duplicada.
+     ============================================================ -->
+<script id="datos-sala" type="application/json">
+<?php echo json_encode([
+    'sala'     => $_SESSION['nombre_sala'],
+    'grupo'    => $_SESSION['grupo'],
+    'equipos'  => array_values(array_merge(
+        array_merge(...array_values($pcs_por_fila)),
+        $switches,
+        $tvs
+    )),
+    'reportes' => $reportes_activos,
+    'fotos'    => $fotos_sala,
+    'fotos_ok' => $fotos_disponibles,
+]); ?>
+</script>
+
+<!--
+    El "?v=N" es cache-busting: si modificás mapa.js o mapa.css y los
+    cambios no se reflejan en el navegador, subí este número (v=5, v=6...)
+    para forzar la descarga de la versión nueva.
+-->
+<script src="/js/mapa.js?v=4"></script>
 </body>
 </html>

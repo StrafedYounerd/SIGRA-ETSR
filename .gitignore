@@ -1,2 +1,7 @@
 config/db.php
 .env
+
+# artefacto local y fotos subidas por usuarios
+SIGRA
+public/uploads/fotos/*
+!public/uploads/fotos/index.html

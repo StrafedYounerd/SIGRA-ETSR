@@ -68,13 +68,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIGRA-ETSR · Seleccionar sala</title>
-    <link rel="stylesheet" href="../../css/estilos.css">
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="stylesheet" href="/css/estilos.css?v=4">
 </head>
 <body>
 
     <div class="barra-superior">
-        <?php echo htmlspecialchars($_SESSION['nombre']); ?> (Docente)
+        <span class="barra-marca">
+            <img src="img/logo-accessnet.png" alt="Logo de AccessNet">
+            SIGRA-ETSR
+        </span>
+        <span class="barra-usuario">
+            <strong><?php echo htmlspecialchars($_SESSION['nombre']); ?></strong> · Docente
+        </span>
+        <a href="javascript:history.back()">Volver atrás</a>
         <a href="../logout.php">Cerrar sesión</a>
     </div>
 

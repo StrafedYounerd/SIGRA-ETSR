@@ -27,15 +27,34 @@ function verificarSesion() {
     // inició sesión (o la sesión expiró). Se corta la ejecución
     // y se redirige al login.
     if (!isset($_SESSION['id_usuario'])) {
-        // El "../" depende de en qué carpeta esté la página que llama
-        // a esta función. Se ajusta la ruta en cada página específica
-        // (ver nota al final del archivo).
-        header("Location: /login.php");
+        // Ruta absoluta: Apache sirve public/ como DocumentRoot (ver Dockerfile),
+        // así que "/login.php" siempre apunta a public/login.php sin importar
+        // desde qué subcarpeta (admin/, docente/, tecnico/) se llame esta función.
+        $rutaLogin = '/login.php';
+        header("Location: $rutaLogin");
         exit(); // exit() es obligatorio: sin esto, el resto del script
                 // seguiría ejecutándose aunque ya mandamos la redirección.
     }
-}
 
+    // Verificar timeout de sesión por inactividad (10 minutos = 600 segundos)
+    if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 600) {
+        // Sesión expirada por inactividad
+        session_unset();
+        session_destroy();
+        // Eliminar cookies de sesión
+        if (ini_get("session.use_cookies")) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000,
+                $params["path"], $params["domain"],
+                $params["secure"], $params["httponly"]
+            );
+        }
+        header("Location: /login.php?timeout=1");
+        exit();
+    }
+    // Actualizar el timestamp de última actividad
+    $_SESSION['last_activity'] = time();
+}
 
 // ============================================================
 // FUNCIÓN: obtenerRol()
