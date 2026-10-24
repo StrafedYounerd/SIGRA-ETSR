@@ -71,7 +71,7 @@ function ui_head($opciones) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIGRA-ETSR · <?php echo htmlspecialchars($titulo_vista); ?></title>
     <link rel="stylesheet" href="/css/theme.css">
-    <link rel="stylesheet" href="/css/estilos.css?v=4">
+    <link rel="stylesheet" href="/css/estilos.css?v=5">
     <link rel="stylesheet" href="/css/mapa.css?v=6"><!-- acá viven .app/.rail/.contexto -->
 </head>
 <body class="cuerpo-app">

@@ -563,7 +563,7 @@ $etiquetas_estado = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIGRA-ETSR · Gestionar salas y dispositivos</title>
     <link rel="stylesheet" href="/css/theme.css">
-    <link rel="stylesheet" href="/css/estilos.css?v=4">
+    <link rel="stylesheet" href="/css/estilos.css?v=5">
 </head>
 <body>
 

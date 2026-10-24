@@ -248,9 +248,14 @@ td a:hover {
 }
 
 .barra-marca img {
-    height: 26px;
+    height: 20px;
     width: auto;
     display: block;
+    /* Pastilla blanca: "Access" es azul marino, igual que el fondo de la barra
+       (misma solución que .rail .tile). */
+    background-color: #fff;
+    padding: 5px 9px;
+    border-radius: 6px;
 }
 
 /* ── Nombre y rol del usuario en la barra ──
