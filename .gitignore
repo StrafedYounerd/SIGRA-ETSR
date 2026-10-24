@@ -1,5 +1,7 @@
 config/db.php
 .env
+*.bak
+*.backup
 
 # artefacto local y fotos subidas por usuarios
 SIGRA
