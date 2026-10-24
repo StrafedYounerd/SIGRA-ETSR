@@ -348,12 +348,35 @@ svg .seg-sin_eval  { fill: #d9d9d9; stroke: #4a5a66; stroke-width: 0.8; }
 .bloque-foto { margin-top: 12px; }
 .etiq-foto { display: block; font-size: 0.85rem; font-weight: 600; margin: 10px 0 4px; }
 
-.bloque-foto input[type="file"] {
-    display: block;
-    width: 100%;
-    font-size: 0.85rem;
-    margin-top: 4px;
+.bloque-foto .etiq-foto { margin-top: 0; }
+
+/* El <input type=file> nativo ("Examinar… Ningún archivo") se oculta de forma
+   accesible y la <label> hace de botón. Sigue enfocable con teclado. */
+.input-foto {
+    position: absolute;
+    width: 1px; height: 1px;
+    opacity: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
 }
+.btn-elegir-foto {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1.5px dashed var(--color-borde);
+    border-radius: 6px;
+    background: var(--color-superficie);
+    color: var(--color-primario);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-elegir-foto::before { content: "+"; font-size: 1.15rem; line-height: 1; }
+.btn-elegir-foto:hover { background: var(--color-superficie-alt); border-color: var(--color-primario); }
+.input-foto:focus-visible + .btn-elegir-foto { outline: 3px solid var(--color-acento); outline-offset: 2px; }
+
+.error-foto { margin-top: 6px; font-size: 0.82rem; color: var(--color-peligro, #8f1d18); }
 
 .previa-foto { margin-top: 8px; }
 .previa-foto img {
@@ -363,6 +386,9 @@ svg .seg-sin_eval  { fill: #d9d9d9; stroke: #4a5a66; stroke-width: 0.8; }
     border-radius: 6px;
     border: 1px solid var(--color-borde);
 }
+.previa-datos { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+.previa-info { font-size: 0.8rem; color: var(--color-texto-suave); }
+.previa-datos .btn-quitar-foto { margin-top: 0; }
 .btn-quitar-foto {
     background: none;
     border: 1px solid var(--color-borde);
@@ -407,8 +433,10 @@ svg .seg-sin_eval  { fill: #d9d9d9; stroke: #4a5a66; stroke-width: 0.8; }
 
 .historial-fotos { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--color-borde); font-size: 0.85rem; }
 .historial-fotos h3 { margin: 0 0 6px; font-size: 0.9rem; }
-.historial-fotos ul { margin: 0; padding-left: 18px; }
-.historial-fotos li { margin-bottom: 4px; }
+.galeria-fotos { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
+.galeria-fotos a { display: block; text-decoration: none; color: var(--color-texto-suave); font-size: 0.72rem; text-align: center; }
+.galeria-fotos img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; border: 1px solid var(--color-borde); }
+.galeria-fotos span { display: block; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ── Tablero del técnico (3 columnas) ── */
 .contenido-vista { padding: 20px 26px 40px; }

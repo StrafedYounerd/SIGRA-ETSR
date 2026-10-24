@@ -95,6 +95,9 @@ $salas_disponibles = $conexion->query("SELECT id_sala, nombre_sala FROM salas WH
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
+    <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
     <title>SIGRA-ETSR · Historial completo (Administrador)</title>
     <link rel="stylesheet" href="/css/theme.css">
     <link rel="stylesheet" href="/css/estilos.css?v=5">

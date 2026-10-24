@@ -7,6 +7,7 @@
 require '../../includes/auth.php';
 require '../../config/db.php';
 require '../../includes/ui.php';
+require '../../includes/fotos.php';
 
 requerirRol(['docente']);
 
@@ -60,21 +61,29 @@ while ($rep = $resultado_activos->fetch_assoc()) {
     $reportes_activos[$rep['id_pc']] = $rep;
 }
 
-// ── Fotos existentes de esta sala (últimas 20) para el listado del cajón ──
+// ── Fotos de esta sala para el cajón ──
+// Últimas 20 de control + TODAS las de fallas con ticket abierto. Antes era
+// un único LIMIT 20 sobre todo: las fotos de control empujaban afuera la foto
+// de un reporte abierto y esta desaparecía del cajón.
 // Si la migración bd/migracion_fotos.sql todavía no se aplicó, la tabla
 // fotos no existe: la consulta falla y el sistema degrada sin fotos.
 $fotos_sala = [];
 $fotos_disponibles = false;
 $consulta_fotos = @$conexion->prepare(
-    "SELECT f.id_foto, f.tipo, f.archivo, f.fecha_subida, f.id_pc, p.etiqueta
-     FROM fotos f
-     LEFT JOIN pcs p ON f.id_pc = p.id_pc
-     WHERE p.id_sala = ? OR f.id_pc IS NULL
-     ORDER BY f.fecha_subida DESC
-     LIMIT 20"
+    "(SELECT f.id_foto, f.tipo, f.archivo, f.fecha_subida, f.id_pc, f.id_ticket, p.etiqueta
+      FROM fotos f LEFT JOIN pcs p ON f.id_pc = p.id_pc
+      WHERE f.id_sala = ? AND f.tipo = 'control'
+      ORDER BY f.fecha_subida DESC LIMIT 20)
+     UNION ALL
+     (SELECT f.id_foto, f.tipo, f.archivo, f.fecha_subida, f.id_pc, f.id_ticket, p.etiqueta
+      FROM fotos f
+      INNER JOIN pcs p ON f.id_pc = p.id_pc
+      INNER JOIN tickets t ON f.id_ticket = t.id_ticket
+      WHERE f.id_sala = ? AND f.tipo = 'falla' AND t.estado IN ('pendiente', 'en_reparacion'))
+     ORDER BY fecha_subida DESC"
 );
 if ($consulta_fotos) {
-    $consulta_fotos->bind_param("i", $_SESSION['id_sala']);
+    $consulta_fotos->bind_param("ii", $_SESSION['id_sala'], $_SESSION['id_sala']);
     $consulta_fotos->execute();
     $resultado_fotos = $consulta_fotos->get_result();
     while ($foto = $resultado_fotos->fetch_assoc()) {
@@ -88,10 +97,13 @@ if ($consulta_fotos) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
+    <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
     <title>SIGRA-ETSR · Mapa de sala</title>
     <link rel="stylesheet" href="/css/theme.css">
     <link rel="stylesheet" href="/css/estilos.css?v=5">
-    <link rel="stylesheet" href="/css/mapa.css?v=6">
+    <link rel="stylesheet" href="/css/mapa.css?v=7">
 </head>
 <body class="cuerpo-app">
 
@@ -164,6 +176,7 @@ if ($consulta_fotos) {
     'reportes' => $reportes_activos,
     'fotos'    => $fotos_sala,
     'fotos_ok' => $fotos_disponibles,
+    'limite_foto' => limite_foto_bytes(),
 ]); ?>
 </script>
 
@@ -172,6 +185,6 @@ if ($consulta_fotos) {
     cambios no se reflejan en el navegador, subí este número (v=5, v=6...)
     para forzar la descarga de la versión nueva.
 -->
-<script src="/js/mapa.js?v=4"></script>
+<script src="/js/mapa.js?v=5"></script>
 </body>
 </html>

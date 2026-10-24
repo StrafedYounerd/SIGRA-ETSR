@@ -31,6 +31,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     responder(false, "Método no permitido");
 }
 
+// Cuerpo demasiado grande: PHP vacía $_POST/$_FILES (ver includes/fotos.php).
+if (subida_excede_post()) {
+    responder(false, mensaje_foto_grande());
+}
+
 // ── Recibimos los datos enviados por el JavaScript ──
 $id_pc         = trim($_POST['id_pc'] ?? '');
 $tipo_falla    = trim($_POST['tipo_falla'] ?? '');
@@ -101,32 +106,47 @@ if (isset($_FILES['foto']) && $_FILES['foto']['error'] !== UPLOAD_ERR_NO_FILE) {
     $foto_archivo = $resultado_foto['archivo'];
 }
 
-// PASO 8: insertar el ticket en la base de datos.
-// Usamos NOW() directo en el SQL, nunca una fecha que venga del navegador
-// (esto cumple la restricción R-04 del D-04: timestamp del servidor).
-$insertar = $conexion->prepare(
-    "INSERT INTO tickets (id_pc, id_docente, tipo_falla, detalle_texto, estado, fecha_reporte)
-     VALUES (?, ?, ?, ?, 'pendiente', NOW())"
-);
-$insertar->bind_param("iiss", $id_pc, $_SESSION['id_usuario'], $tipo_falla, $detalle_texto);
-$insertar->execute();
+// PASOS 8 a 10 en UNA transacción: ticket + estado de la PC + foto.
+// Si algo falla no queda un ticket a medias ni un archivo huérfano en disco.
+try {
+    $conexion->begin_transaction();
 
-// PASO 9: actualizar el estado visual de la PC en el mapa.
-$actualizar_pc = $conexion->prepare("UPDATE pcs SET estado_actual = 'falla' WHERE id_pc = ?");
-$actualizar_pc->bind_param("i", $id_pc);
-$actualizar_pc->execute();
-
-// PASO 10: registrar la foto (si la hay) asociada al ticket recién creado.
-if ($foto_archivo !== null) {
-    $id_ticket_nuevo = $insertar->insert_id;
-    $registrar_foto = $conexion->prepare(
-        "INSERT INTO fotos (id_pc, id_ticket, id_docente, tipo, archivo, fecha_subida)
-         VALUES (?, ?, ?, 'falla', ?, NOW())"
+    // PASO 8: insertar el ticket. NOW() en el SQL, nunca una fecha del
+    // navegador (restricción R-04 del D-04: timestamp del servidor).
+    $insertar = $conexion->prepare(
+        "INSERT INTO tickets (id_pc, id_docente, tipo_falla, detalle_texto, estado, fecha_reporte)
+         VALUES (?, ?, ?, ?, 'pendiente', NOW())"
     );
-    $registrar_foto->bind_param("iiis", $id_pc, $id_ticket_nuevo, $_SESSION['id_usuario'], $foto_archivo);
-    $registrar_foto->execute();
+    $insertar->bind_param("iiss", $id_pc, $_SESSION['id_usuario'], $tipo_falla, $detalle_texto);
+    $insertar->execute();
+    $id_ticket_nuevo = $insertar->insert_id;
+
+    // PASO 9: actualizar el estado visual de la PC en el mapa.
+    $actualizar_pc = $conexion->prepare("UPDATE pcs SET estado_actual = 'falla' WHERE id_pc = ?");
+    $actualizar_pc->bind_param("i", $id_pc);
+    $actualizar_pc->execute();
+
+    // PASO 10: registrar la foto (si la hay) asociada al ticket recién creado.
+    if ($foto_archivo !== null) {
+        $registrar_foto = $conexion->prepare(
+            "INSERT INTO fotos (id_pc, id_sala, id_ticket, id_docente, tipo, archivo, fecha_subida)
+             VALUES (?, ?, ?, ?, 'falla', ?, NOW())"
+        );
+        $registrar_foto->bind_param("iiiis", $id_pc, $_SESSION['id_sala'], $id_ticket_nuevo, $_SESSION['id_usuario'], $foto_archivo);
+        $registrar_foto->execute();
+    }
+
+    $conexion->commit();
+} catch (Throwable $e) {
+    $conexion->rollback();
+    if ($foto_archivo !== null) borrar_foto($foto_archivo);
+    error_log("reportar-falla: " . $e->getMessage());
+    responder(false, "No se pudo registrar el reporte. Probá de nuevo.");
 }
 
-// PASO 11: confirmar al docente.
-responder(true, "Falla registrada correctamente. El técnico fue notificado.");
+// PASO 11: confirmar al docente (el JS usa id_ticket y foto para actualizar el cajón).
+responder(true, "Falla registrada correctamente. El técnico fue notificado.", [
+    'id_ticket' => $id_ticket_nuevo,
+    'foto'      => $foto_archivo,
+]);
 ?>

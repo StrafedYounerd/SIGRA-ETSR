@@ -28,6 +28,10 @@ if (!isset($_SESSION['id_sala'])) {
     responder_foto(false, "No hay una sala activa en tu sesión");
 }
 
+if (subida_excede_post()) {
+    responder_foto(false, mensaje_foto_grande());
+}
+
 // ── id_pc puede venir vacío: foto de control de la sala completa ──
 $id_pc = trim($_POST['id_pc'] ?? '');
 
@@ -59,12 +63,19 @@ $archivo = $resultado_foto['archivo'];
 
 // ── Registrar: id_pc NULL si es de la sala completa; sin ticket ──
 $id_pc_db = ($id_pc !== '') ? (int)$id_pc : null;
-$registrar = $conexion->prepare(
-    "INSERT INTO fotos (id_pc, id_ticket, id_docente, tipo, archivo, fecha_subida)
-     VALUES (?, NULL, ?, 'control', ?, NOW())"
-);
-$registrar->bind_param("iis", $id_pc_db, $_SESSION['id_usuario'], $archivo);
-$registrar->execute();
+// id_sala: sin esto la foto de la sala completa no se podía atribuir a ninguna.
+try {
+    $registrar = $conexion->prepare(
+        "INSERT INTO fotos (id_pc, id_sala, id_ticket, id_docente, tipo, archivo, fecha_subida)
+         VALUES (?, ?, NULL, ?, 'control', ?, NOW())"
+    );
+    $registrar->bind_param("iiis", $id_pc_db, $_SESSION['id_sala'], $_SESSION['id_usuario'], $archivo);
+    $registrar->execute();
+} catch (Throwable $e) {
+    borrar_foto($archivo);
+    error_log("guardar-foto-control: " . $e->getMessage());
+    responder_foto(false, "No se pudo guardar la foto. Probá de nuevo.");
+}
 
 responder_foto(true, "Foto de control guardada.", [
     'archivo' => $archivo,

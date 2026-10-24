@@ -222,37 +222,119 @@ function htmlPasos(estado) {
         `<span class="${k <= i ? "hecho" : ""}">${n}</span>`).join("") + `</div>`;
 }
 
-// Vista previa de la foto elegida + botón Quitar.
-// Devuelve HTML del bloque y deja listeners listos (se llaman después).
-function htmlSelectorFoto(idInput, idPreview) {
+// ============================================================
+// FOTOS: selector, compresión en el navegador y vista previa
+// ============================================================
+// Las fotos de celular pesan 3-8 MB y el servidor corta en 2 MB. En vez de
+// rechazarlas, se reducen acá (lado mayor 1600 px, JPEG) antes de subirlas:
+// quedan en ~300-600 KB, suben rápido por el wifi del liceo y se ven igual.
+const LADO_MAX_FOTO = 1600;
+const CALIDAD_FOTO = 0.82;
+const UMBRAL_SIN_TOCAR = 600 * 1024;
+
+// Foto ya procesada por cada selector (clave = id del input).
+const FOTOS_LISTAS = new Map();
+
+function pesoLegible(bytes) {
+    return bytes >= 1048576 ? (bytes / 1048576).toFixed(1).replace(".", ",") + " MB"
+                            : Math.max(1, Math.round(bytes / 1024)) + " KB";
+}
+
+async function prepararFoto(archivo) {
+    if (!archivo.type.startsWith("image/")) throw new Error("El archivo no es una imagen.");
+    if (archivo.type === "image/gif" || archivo.size <= UMBRAL_SIN_TOCAR) return archivo;
+    try {
+        // imageOrientation: respeta la rotación EXIF (fotos de celular "de costado").
+        const bmp = await createImageBitmap(archivo, { imageOrientation: "from-image" });
+        const escala = Math.min(1, LADO_MAX_FOTO / Math.max(bmp.width, bmp.height));
+        const w = Math.round(bmp.width * escala), h = Math.round(bmp.height * escala);
+        const lienzo = document.createElement("canvas");
+        lienzo.width = w; lienzo.height = h;
+        const ctx = lienzo.getContext("2d");
+        ctx.fillStyle = "#fff";            // PNG con transparencia -> fondo blanco
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(bmp, 0, 0, w, h);
+        bmp.close();
+        const blob = await new Promise(r => lienzo.toBlob(r, "image/jpeg", CALIDAD_FOTO));
+        if (!blob || blob.size >= archivo.size) return archivo;
+        const base = (archivo.name || "foto").replace(/\.[^.]+$/, "");
+        return new File([blob], base + ".jpg", { type: "image/jpeg" });
+    } catch (e) {
+        // El navegador no pudo decodificarla (p. ej. HEIC): se sube tal cual
+        // y el servidor decide con un mensaje claro.
+        return archivo;
+    }
+}
+
+function htmlSelectorFoto(idInput, idPreview, etiqueta) {
     return `
     <div class="bloque-foto">
-        <label for="${idInput}" class="etiq-foto">Foto del problema (opcional)</label>
-        <input type="file" id="${idInput}" accept="image/*">
+        <span class="etiq-foto">${etiqueta}</span>
+        <input type="file" id="${idInput}" class="input-foto" accept="image/*">
+        <label for="${idInput}" class="btn-elegir-foto">Elegir o tomar foto</label>
         <div class="previa-foto" id="${idPreview}" hidden>
             <img alt="Vista previa de la foto elegida">
-            <button type="button" class="btn-quitar-foto">Quitar</button>
+            <div class="previa-datos">
+                <span class="previa-info"></span>
+                <button type="button" class="btn-quitar-foto">Quitar</button>
+            </div>
         </div>
+        <div class="error-foto" role="alert" hidden></div>
     </div>`;
 }
 
-// Conecta input file + preview + quitar.
+// Conecta input + vista previa + quitar. alCambiar(archivo|null) avisa al
+// botón de guardar/enviar.
 function conectarSelectorFoto(idInput, idPreview, alCambiar) {
     const input = document.getElementById(idInput);
     const previa = document.getElementById(idPreview);
     if (!input || !previa) return null;
-    input.addEventListener("change", () => {
-        const f = input.files && input.files[0];
-        if (!f) { previa.hidden = true; if (alCambiar) alCambiar(null); return; }
-        const url = URL.createObjectURL(f);
-        previa.querySelector("img").src = url;
+    const imagen = previa.querySelector("img");
+    const info = previa.querySelector(".previa-info");
+    const error = previa.parentElement.querySelector(".error-foto");
+    const aviso = alCambiar || (() => {});
+
+    function limpiar() {
+        FOTOS_LISTAS.delete(idInput);
+        if (imagen.src.startsWith("blob:")) URL.revokeObjectURL(imagen.src);
+        imagen.removeAttribute("src");
+        previa.hidden = true;
+        input.value = "";
+        aviso(null);
+    }
+    function mostrarError(texto) {
+        error.textContent = texto;
+        error.hidden = !texto;
+    }
+
+    input.addEventListener("change", async () => {
+        mostrarError("");
+        const original = input.files && input.files[0];
+        if (!original) { limpiar(); return; }
         previa.hidden = false;
-        if (alCambiar) alCambiar(f);
+        info.textContent = "Procesando…";
+        aviso(null);
+        try {
+            const lista = await prepararFoto(original);
+            const limite = DATOS.limite_foto || 2097152;
+            if (lista.size > limite) {
+                limpiar();
+                mostrarError(`La foto pesa ${pesoLegible(lista.size)} y el máximo es ${pesoLegible(limite)}.`);
+                return;
+            }
+            FOTOS_LISTAS.set(idInput, lista);
+            if (imagen.src.startsWith("blob:")) URL.revokeObjectURL(imagen.src);
+            imagen.src = URL.createObjectURL(lista);
+            info.textContent = pesoLegible(lista.size);
+            aviso(lista);
+        } catch (e) {
+            limpiar();
+            mostrarError(e.message || "No se pudo leer la foto.");
+        }
     });
     previa.querySelector(".btn-quitar-foto").addEventListener("click", () => {
-        input.value = "";
-        previa.hidden = true;
-        if (alCambiar) alCambiar(null);
+        mostrarError("");
+        limpiar();
     });
     return input;
 }
@@ -262,6 +344,7 @@ function conectarSelectorFoto(idInput, idPreview, alCambiar) {
 function renderCajon() {
     const c = $("#cajon");
     if (!c) return;
+    FOTOS_LISTAS.clear();   // los selectores se crean de nuevo en cada render
 
     // ── Sin equipo seleccionado: resumen de la sala ──
     if (!seleccion) {
@@ -277,17 +360,20 @@ function renderCajon() {
         h += `<div class="seccion-control">
                 <h3>Foto de control de la sala</h3>
                 <p class="nota">Guardá cómo quedó la sala al terminar la clase. No reporta ninguna falla.</p>
-                ${htmlSelectorFoto("foto-control-sala", "previa-control-sala")}
+                ${htmlSelectorFoto("foto-control-sala", "previa-control-sala", "Foto de la sala")}
                 <button type="button" class="btn-guardar-foto" id="btn-control-sala" disabled>Guardar foto</button>
               </div>`;
         // Últimas fotos de control guardadas
         const fotosControl = DATOS.fotos.filter(f => f.tipo === "control");
         if (fotosControl.length) {
-            h += `<div class="historial-fotos"><h3>Fotos de control guardadas</h3><ul>` +
+            h += `<div class="historial-fotos"><h3>Fotos de control guardadas</h3><div class="galeria-fotos">` +
                 fotosControl.map(f =>
-                    `<li>${esc(formatoFecha(f.fecha_subida))}${f.etiqueta ? " · " + esc(f.etiqueta) : ""}
-                     <a href="/uploads/fotos/${esc(f.archivo)}" target="_blank" rel="noopener">Ver</a></li>`).join("") +
-                `</ul></div>`;
+                    `<a href="/uploads/fotos/${esc(f.archivo)}" target="_blank" rel="noopener"
+                        title="${esc(formatoFecha(f.fecha_subida))}${f.etiqueta ? " · " + esc(f.etiqueta) : ""}">
+                        <img src="/uploads/fotos/${esc(f.archivo)}" loading="lazy" decoding="async" alt="Foto de control">
+                        <span>${f.etiqueta ? esc(f.etiqueta) : "Sala"}</span>
+                     </a>`).join("") +
+                `</div></div>`;
         }
         h += `<p class="nota">Tocá un equipo del plano para ver su estado o reportar una falla.</p>`;
         c.innerHTML = h;
@@ -298,7 +384,7 @@ function renderCajon() {
         }));
 
         const inputSala = conectarSelectorFoto("foto-control-sala", "previa-control-sala", () => {
-            $("#btn-control-sala").disabled = !(inputSala.files && inputSala.files[0]);
+            $("#btn-control-sala").disabled = !FOTOS_LISTAS.has("foto-control-sala");
         });
         $("#btn-control-sala").addEventListener("click", () => enviarFotoControl(null, "foto-control-sala"));
         return;
@@ -320,7 +406,7 @@ function renderCajon() {
               ${htmlPasos(reporte.estado)}`;
         if (fotosRep.length) {
             h += `<div class="miniatura-foto">
-                    <img src="/uploads/fotos/${esc(fotosRep[0].archivo)}" alt="Foto adjunta del reporte">
+                    <img src="/uploads/fotos/${esc(fotosRep[0].archivo)}" loading="lazy" decoding="async" alt="Foto adjunta del reporte">
                     <a href="/uploads/fotos/${esc(fotosRep[0].archivo)}" target="_blank" rel="noopener">Ver foto adjunta</a>
                   </div>`;
         }
@@ -338,7 +424,7 @@ function renderCajon() {
                 <label class="etiq-foto" for="campo-detalle">Detalle</label>
                 <textarea id="campo-detalle" rows="3" placeholder="Ej: falta instalar Python"></textarea>
             </div>
-            ${htmlSelectorFoto("campo-foto", "previa-foto-reporte")}
+            ${htmlSelectorFoto("campo-foto", "previa-foto-reporte", "Foto del problema (opcional)")}
             <div id="cajon-error" class="nota error-nota" hidden></div>
             <button type="button" class="btn-turq" id="btn-confirmar-reporte">Reportar falla</button>`;
     }
@@ -347,7 +433,7 @@ function renderCajon() {
     h += `<div class="seccion-control">
             <h3>Foto de control del equipo</h3>
             <p class="nota">Registra el estado actual del equipo. No reporta una falla.</p>
-            ${htmlSelectorFoto("foto-control-eq", "previa-control-eq")}
+            ${htmlSelectorFoto("foto-control-eq", "previa-control-eq", "Foto del equipo")}
             <button type="button" class="btn-guardar-foto" id="btn-control-eq" disabled>Guardar foto</button>
           </div>
           <p class="pie-cajon"><button type="button" class="btn-volver" id="btn-cerrar-cajon">Volver al resumen</button></p>`;
@@ -364,7 +450,7 @@ function renderCajon() {
     }
 
     const inputEq = conectarSelectorFoto("foto-control-eq", "previa-control-eq", () => {
-        $("#btn-control-eq").disabled = !(inputEq.files && inputEq.files[0]);
+        $("#btn-control-eq").disabled = !FOTOS_LISTAS.has("foto-control-eq");
     });
     $("#btn-control-eq").addEventListener("click", () => enviarFotoControl(e.id_pc, "foto-control-eq"));
 
@@ -392,8 +478,9 @@ function enviarReporte() {
     const idPC = seleccion.id_pc;
     const tipoFalla = $("#campo-tipo-falla").value;
     const detalleTexto = $("#campo-detalle").value;
-    const inputFoto = $("#campo-foto");
     const error = $("#cajon-error");
+    const boton = $("#btn-confirmar-reporte");
+    if (boton.disabled) return;   // evita doble envío
 
     error.hidden = true;
 
@@ -412,9 +499,11 @@ function enviarReporte() {
     datos.append("id_pc", idPC);
     datos.append("tipo_falla", tipoFalla);
     datos.append("detalle_texto", detalleTexto);
-    if (inputFoto && inputFoto.files && inputFoto.files[0]) {
-        datos.append("foto", inputFoto.files[0]);
-    }
+    const fotoLista = FOTOS_LISTAS.get("campo-foto");
+    if (fotoLista) datos.append("foto", fotoLista, fotoLista.name);
+
+    boton.disabled = true;
+    boton.textContent = fotoLista ? "Enviando con foto…" : "Enviando…";
 
     fetch("reportar-falla.php", { method: "POST", body: datos })
         .then(r => r.json())
@@ -432,30 +521,43 @@ function enviarReporte() {
                     fecha_reporte: new Date().toISOString().slice(0, 19).replace("T", " "),
                     etiqueta: seleccion.etiqueta
                 };
+                if (resp.foto) {
+                    DATOS.fotos.unshift({
+                        id_foto: 0, tipo: "falla", archivo: resp.foto,
+                        fecha_subida: new Date().toISOString().slice(0, 19).replace("T", " "),
+                        id_pc: seleccion.id_pc, id_ticket: resp.id_ticket || 0,
+                        etiqueta: seleccion.etiqueta
+                    });
+                }
                 dibujarPlano();
                 renderCajon();
             } else {
                 error.textContent = resp.mensaje || "No se pudo registrar el reporte";
                 error.hidden = false;
+                boton.disabled = false;
+                boton.textContent = "Reportar falla";
             }
         })
         .catch(err => {
+            // Antes se recargaba la página y se perdía lo escrito y la foto.
+            // Ahora se avisa y se conserva el formulario para reintentar.
             console.error("Error al enviar el reporte:", err);
-            // Fallback: el comportamiento previo era recargar; lo mantenemos
-            // si la comunicación con el servidor falla.
-            window.location.reload();
+            error.textContent = "No hay conexión con el servidor. Probá de nuevo.";
+            error.hidden = false;
+            boton.disabled = false;
+            boton.textContent = "Reportar falla";
         });
 }
 
 // Foto de control: POST a guardar-foto-control.php. No cambia estado ni crea ticket.
 function enviarFotoControl(idPC, idInput) {
-    const input = document.getElementById(idInput);
     const boton = idPC === null ? $("#btn-control-sala") : $("#btn-control-eq");
-    if (!input || !input.files || !input.files[0]) return;
+    const foto = FOTOS_LISTAS.get(idInput);
+    if (!foto || boton.disabled) return;
 
     const datos = new FormData();
     if (idPC !== null) datos.append("id_pc", idPC);
-    datos.append("foto", input.files[0]);
+    datos.append("foto", foto, foto.name);
     boton.disabled = true;
     boton.textContent = "Guardando…";
 
@@ -497,6 +599,12 @@ function iniciarPolling() {
     }, 1000);
 }
 
+function cajonEnUso() {
+    const c = $("#cajon");
+    return FOTOS_LISTAS.size > 0 || (c && c.contains(document.activeElement)
+        && /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName));
+}
+
 // Vuelve a pedir la MISMA página y reemplaza el JSON de datos.
 // Si algún equipo cambió de estado, se resalta con la clase .cambia.
 function refrescarSala() {
@@ -516,7 +624,9 @@ function refrescarSala() {
                 seleccion = DATOS.equipos.find(e => String(e.id_pc) === String(seleccion.id_pc)) || null;
             }
             dibujarPlano();
-            if (!seleccion) renderCajon();
+            // Sin equipo seleccionado el cajón se redibuja para mostrar reportes
+            // nuevos; pero no si hay una foto elegida o un campo en uso (se perdería).
+            if (!seleccion && !cajonEnUso()) renderCajon();
 
             // resaltar cambios de estado respecto a la versión anterior
             DATOS.equipos.forEach(e => {

@@ -14,7 +14,59 @@
 //     derivada del tipo real detectado: nunca el nombre del cliente.
 //   * Se guarda en public/uploads/fotos/ (directorio sin ejecución).
 
-define('FOTO_MAX_BYTES', 5 * 1024 * 1024); // 5 MB
+define('FOTO_MAX_BYTES', 5 * 1024 * 1024); // tope propio: 5 MB
+
+/** Convierte "2M" / "8M" / "512K" de php.ini a bytes. */
+function ini_a_bytes($valor) {
+    $valor = trim((string) $valor);
+    if ($valor === '') return 0;
+    $n = (float) $valor;
+    switch (strtolower(substr($valor, -1))) {
+        case 'g': $n *= 1024;
+        case 'm': $n *= 1024;
+        case 'k': $n *= 1024;
+    }
+    return (int) $n;
+}
+
+/**
+ * Máximo REAL aceptado: el menor entre nuestro tope y los límites de PHP
+ * (upload_max_filesize / post_max_size). Antes el mensaje decía "5 MB"
+ * aunque PHP cortaba en 2 MB.
+ */
+function limite_foto_bytes() {
+    $limite = FOTO_MAX_BYTES;
+    foreach (['upload_max_filesize', 'post_max_size'] as $clave) {
+        $b = ini_a_bytes(ini_get($clave));
+        if ($b > 0) $limite = min($limite, $b);
+    }
+    return $limite;
+}
+
+function texto_mb($bytes) {
+    return rtrim(rtrim(number_format($bytes / 1048576, 1, ',', ''), '0'), ',') . ' MB';
+}
+
+/**
+ * Si el cuerpo del POST supera post_max_size, PHP descarta $_POST y $_FILES
+ * por completo: sin esta detección el servidor respondía errores engañosos
+ * ("la PC no existe").
+ */
+function subida_excede_post() {
+    return ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST'
+        && empty($_POST) && empty($_FILES)
+        && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0;
+}
+
+function mensaje_foto_grande() {
+    return "La foto es demasiado grande (máximo " . texto_mb(limite_foto_bytes()) . ")";
+}
+
+/** Borra una foto ya guardada (se usa si falla el INSERT posterior). */
+function borrar_foto($archivo) {
+    $ruta = dirname(__DIR__) . '/public/uploads/fotos/' . basename((string) $archivo);
+    if (is_file($ruta)) @unlink($ruta);
+}
 
 function validar_y_guardar_foto($archivo_subido) {
     // ── Error de PHP en la subida (tamaño, permisos, etc.) ──
@@ -23,7 +75,7 @@ function validar_y_guardar_foto($archivo_subido) {
     }
     if ($archivo_subido['error'] !== UPLOAD_ERR_OK) {
         if ($archivo_subido['error'] === UPLOAD_ERR_INI_SIZE || $archivo_subido['error'] === UPLOAD_ERR_FORM_SIZE) {
-            return ['error' => "La foto supera el máximo de 5 MB"];
+            return ['error' => mensaje_foto_grande()];
         }
         return ['error' => "Error al subir la foto (código " . $archivo_subido['error'] . ")"];
     }
@@ -32,8 +84,8 @@ function validar_y_guardar_foto($archivo_subido) {
     if ($archivo_subido['size'] <= 0) {
         return ['error' => "El archivo está vacío"];
     }
-    if ($archivo_subido['size'] > FOTO_MAX_BYTES) {
-        return ['error' => "La foto supera el máximo de 5 MB"];
+    if ($archivo_subido['size'] > limite_foto_bytes()) {
+        return ['error' => mensaje_foto_grande()];
     }
 
     // ── Tipo REAL del archivo: se lee el contenido con finfo ──
@@ -64,11 +116,14 @@ function validar_y_guardar_foto($archivo_subido) {
 
     $directorio = dirname(__DIR__) . '/public/uploads/fotos';
     if (!is_dir($directorio)) {
-        mkdir($directorio, 0775, true);
+        @mkdir($directorio, 0775, true);
     }
 
+    // @: si falla (permisos del directorio) PHP imprimiría un warning dentro del
+    // JSON y el navegador no podría leer la respuesta; el error se informa abajo.
     $destino = $directorio . '/' . $nombre_final;
-    if (!move_uploaded_file($archivo_subido['tmp_name'], $destino)) {
+    if (!@move_uploaded_file($archivo_subido['tmp_name'], $destino)) {
+        error_log("fotos.php: no se pudo escribir en $directorio");
         return ['error' => "No se pudo guardar la foto en el servidor"];
     }
     @chmod($destino, 0644);

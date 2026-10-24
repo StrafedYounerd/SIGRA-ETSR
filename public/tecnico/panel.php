@@ -95,10 +95,13 @@ function antiguedad_ticket($fecha) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
+    <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
     <title>SIGRA-ETSR · Panel del técnico</title>
     <link rel="stylesheet" href="/css/theme.css">
     <link rel="stylesheet" href="/css/estilos.css?v=5">
-    <link rel="stylesheet" href="/css/mapa.css?v=6">
+    <link rel="stylesheet" href="/css/mapa.css?v=7">
 </head>
 <body class="cuerpo-app">
 
@@ -181,7 +184,7 @@ function antiguedad_ticket($fecha) {
                     </p>
                     <?php if ($foto): ?>
                         <div class="miniatura-foto">
-                            <img src="/uploads/fotos/<?php echo htmlspecialchars($foto); ?>" alt="Foto adjunta del reporte">
+                            <img src="/uploads/fotos/<?php echo htmlspecialchars($foto); ?>" loading="lazy" decoding="async" alt="Foto adjunta del reporte">
                             <a href="/uploads/fotos/<?php echo htmlspecialchars($foto); ?>" target="_blank" rel="noopener">Ver foto adjunta</a>
                         </div>
                     <?php endif; ?>
