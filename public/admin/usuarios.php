@@ -268,7 +268,7 @@ $lista_usuarios = $conexion->query(
 
     <div class="barra-superior">
         <span class="barra-marca">
-            <img src="img/logo-accessnet.png" alt="Logo de AccessNet">
+            <img src="/img/logo-accessnet.png" alt="Logo de AccessNet">
             SIGRA-ETSR
         </span>
         <span class="barra-usuario">

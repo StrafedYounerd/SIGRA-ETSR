@@ -104,7 +104,7 @@ $salas_disponibles = $conexion->query("SELECT id_sala, nombre_sala FROM salas WH
 
     <div class="barra-superior">
         <span class="barra-marca">
-            <img src="img/logo-accessnet.png" alt="Logo de AccessNet">
+            <img src="/img/logo-accessnet.png" alt="Logo de AccessNet">
             SIGRA-ETSR
         </span>
         <span class="barra-usuario">
