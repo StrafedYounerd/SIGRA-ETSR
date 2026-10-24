@@ -71,6 +71,7 @@ CREATE TABLE pcs (
   fila           INT(11) NOT NULL,
   posicion       INT(11) NOT NULL,
   estado_actual  ENUM('funcional', 'falla', 'sin_eval') NOT NULL DEFAULT 'sin_eval',
+  tipo_equipo    ENUM('PC', 'Switch', 'TV', 'Proyector') NOT NULL DEFAULT 'PC',
   PRIMARY KEY (id_pc),
   CONSTRAINT fk_pc_sala
     FOREIGN KEY (id_sala) REFERENCES salas(id_sala)
