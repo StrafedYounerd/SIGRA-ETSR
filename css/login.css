@@ -160,5 +160,5 @@
 /* ── Responsive: apilar (marca arriba, form abajo) ── */
 @media (max-width: 900px) {
     .login { flex-direction: column; }
-    .login-marca { min-height: 240px; padding: 28px; }
+    .login-marca { min-height: 240px; padding: 64px 28px 28px; } /* arriba: lugar para el botón de pausa */
 }
