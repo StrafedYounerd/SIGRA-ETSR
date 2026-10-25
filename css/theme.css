@@ -6,31 +6,51 @@
    Cambiar cualquier color acá se propaga a todo el sistema
    (estilos.css y mapa.css consumen estas variables).
 
-   Regla de uso:
-   - --color-primario (navy): barra superior, títulos, botones
-     principales, texto de encabezado.
-   - --color-acento (turquesa): foco de formularios, detalles,
-     estados activos. NUNCA como color de texto sobre blanco
-     (no cumple contraste AA) ni en el mapa de estados.
+   Regla de uso (ronda 3 — superficie clara):
+   - Fondos grandes en blanco o aqua-50; NINGUNA superficie en navy.
+   - --aqua (turquesa): pestaña activa, avatar, línea superior de la
+     barra, botón principal (texto navy encima), contadores, foco.
+     NUNCA como texto sobre blanco (usar --aqua-text) ni en el mapa.
+   - --navy: texto, títulos y botones secundarios, nada más.
+   - Verde/rojo/gris del mapa y el verde de "Marcar solucionado" son
+     del requerimiento RNF01 y viven en mapa.css, no acá.
    - Verde/rojo/gris del mapa son del requerimiento RNF01 y
      viven en mapa.css, no acá.
 */
 
 :root {
-    /* Marca */
-    --color-primario: #003852;
-    --color-primario-oscuro: #002a3d;
-    --color-acento: #00c4cc;
-    --color-acento-texto: #00707a;   /* turquesa oscurecido para texto/links sobre blanco (AA) */
+    /* ── Paleta de marca AccessNet (ronda 3: superficie clara + aqua) ──
+       El aqua #00c4cc NUNCA es texto sobre blanco: para texto/links
+       se usa --aqua-text. El navy queda para texto, títulos y
+       botones secundarios; ninguna superficie grande lo usa. */
+    --navy: #003852;
+    --aqua: #00c4cc;
+    --aqua-hover: #00aab1;
+    --aqua-text: #007c84;   /* aqua legible sobre blanco (AA) */
+    --aqua-50: #effbfc;    /* fondo de página */
+    --aqua-100: #d6f4f6;   /* bordes suaves, chips */
+    --aqua-200: #a8e8ec;
+    --ink: #12303f;        /* texto normal */
+    --muted: #5f7a86;      /* texto secundario */
+    --line: #d6e6ea;       /* bordes */
+    --topbar-h: 56px;
+    --tabbar-h: 60px;
+
+    /* ── Alias históricos: el CSS existente consume estos nombres,
+       ahora apuntan a la paleta nueva ── */
+    --color-primario: var(--navy);
+    --color-primario-oscuro: #00496a;
+    --color-acento: var(--aqua);
+    --color-acento-texto: var(--aqua-text);
 
     /* Superficies y texto */
-    --color-fondo: #eef2f6;
+    --color-fondo: var(--aqua-50);
     --color-superficie: #ffffff;
-    --color-superficie-alt: #f7fafc;
-    --color-texto: #1b2b36;
-    --color-texto-suave: #51626f;
-    --color-borde: #d3dce4;
-    --color-borde-suave: #e4eaf0;
+    --color-superficie-alt: #f7fcfd;
+    --color-texto: var(--ink);
+    --color-texto-suave: var(--muted);
+    --color-borde: var(--line);
+    --color-borde-suave: #e9f4f5;
 
     /* Estados de ticket (presentación; los valores internos
        'pendiente'/'en_reparacion'/'solucionado' no cambian) */
@@ -118,15 +138,17 @@
 /* ── Botones de acción diferenciados ──
    En el panel del técnico, "Marcar en reparación" y "Marcar
    solucionado" no pueden verse iguales: uno avanza el flujo,
-   el otro lo cierra. */
+   el otro lo cierra. Secundario = navy (el azul oscuro solo
+   vive en botones y texto, nunca como superficie grande). */
 .btn-secundario {
-    background-color: #0b4f9e;
-    border-color: #0b4f9e;
+    background-color: var(--navy);
+    border-color: var(--navy);
+    color: #ffffff;
 }
 
 .btn-secundario:hover {
-    background-color: #093f7e;
-    border-color: #093f7e;
+    background-color: #00496a;
+    border-color: #00496a;
 }
 
 .btn-exito {
@@ -144,22 +166,22 @@
     color: var(--peligro-texto) !important;
 }
 
-/* ── Tarjetas de resumen del panel admin ── */
+/* ── Tarjetas de resumen del panel admin (contadores) ── */
 .tarjeta-resumen {
     background-color: var(--color-superficie);
-    border: 1px solid var(--color-borde);
-    border-top: 3px solid var(--color-acento);
-    border-radius: var(--radio);
-    box-shadow: var(--sombra);
+    border: 1px solid var(--line);
+    border-top: 4px solid var(--aqua);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 56, 82, 0.06);
     padding: 16px 18px;
     flex: 1 1 140px;
     min-width: 140px;
 }
 
 .tarjeta-resumen .tarjeta-cifra {
-    font-size: 30px;
-    font-weight: 700;
-    color: var(--color-primario);
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--navy);
     line-height: 1.1;
 }
 

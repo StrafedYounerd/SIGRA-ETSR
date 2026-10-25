@@ -12,11 +12,15 @@
 /* ── Base ── */
 body {
     font-family: var(--fuente);
-    background-color: var(--color-fondo);
-    color: var(--color-texto);
+    background-color: var(--aqua-50);
+    color: var(--ink);
     margin: 0;
     padding: 20px;
     -webkit-font-smoothing: antialiased;
+}
+
+a {
+    color: var(--aqua-text);
 }
 
 /* ── Caja contenedora genérica (login, formularios, paneles) ── */
@@ -96,36 +100,37 @@ input:focus,
 select:focus,
 textarea:focus {
     outline: none;
-    border-color: var(--color-acento);
-    box-shadow: 0 0 0 3px rgba(0, 196, 204, 0.22);
+    border-color: var(--aqua);
+    box-shadow: 0 0 0 3px var(--aqua-100);
 }
 
-/* ── Botones ── */
+/* ── Botones ──
+   El botón genérico de formulario es el PRINCIPAL de cada vista:
+   aqua con texto navy (nunca texto aqua sobre aqua o blanco). */
 button,
 input[type="submit"] {
-    background-color: var(--color-primario);
-    color: #ffffff;
-    border: 1px solid var(--color-primario);
-    border-radius: var(--radio-chico);
-    padding: 9px 16px;
+    background-color: var(--aqua);
+    color: var(--navy);
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 18px;
     font-family: var(--fuente);
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     margin-top: 15px;
     cursor: pointer;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
+    transition: background-color 0.15s ease;
 }
 
 button:hover,
 input[type="submit"]:hover {
-    background-color: var(--color-primario-oscuro);
-    border-color: var(--color-primario-oscuro);
+    background-color: var(--aqua-hover);
 }
 
 button:focus-visible,
 input[type="submit"]:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 196, 204, 0.35);
+    outline: 3px solid var(--navy);
+    outline-offset: 2px;
 }
 
 /* Botones dentro de tablas y acciones puntuales: más compactos,

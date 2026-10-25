@@ -42,10 +42,10 @@ ui_head(['titulo' => 'Panel de administración', 'activo' => 'panel']);
         </div>
 
         <div class="menu-acciones">
-            <a href="usuarios.php"><button type="button">Gestionar usuarios</button></a>
-            <a href="salas.php"><button type="button">Gestionar salas y dispositivos</button></a>
-            <a href="historial.php"><button type="button">Ver historial completo</button></a>
-            <a href="estadisticas.php"><button type="button">Ver estadísticas</button></a>
+            <a href="usuarios.php"><button type="button" class="btn-primary">Gestionar usuarios</button></a>
+            <a href="salas.php"><button type="button" class="btn-secondary">Gestionar salas y dispositivos</button></a>
+            <a href="historial.php"><button type="button" class="btn-secondary">Ver historial completo</button></a>
+            <a href="estadisticas.php"><button type="button" class="btn-secondary">Ver estadísticas</button></a>
         </div>
     </div>
 

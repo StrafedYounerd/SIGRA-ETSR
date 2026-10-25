@@ -29,6 +29,7 @@
     margin: 0;
     font-size: 1.35rem;
     letter-spacing: -0.01em;
+    color: var(--navy);
 }
 
 .contexto .dato {
@@ -181,6 +182,7 @@ svg .seg-sin_eval  { fill: #d9d9d9; stroke: #4a5a66; stroke-width: 0.8; }
 .cajon h2 {
     margin: 0;
     font-size: 1.05rem;
+    color: var(--navy);
 }
 
 .cajon .codigo {
@@ -234,8 +236,8 @@ svg .seg-sin_eval  { fill: #d9d9d9; stroke: #4a5a66; stroke-width: 0.8; }
 
 /* Botones del cajón */
 .btn-turq {
-    background-color: var(--color-acento);
-    color: var(--color-primario-oscuro);
+    background-color: var(--aqua);
+    color: var(--navy);
     border: 0;
     border-radius: 6px;
     padding: 10px 16px;
@@ -280,16 +282,16 @@ svg .seg-sin_eval  { fill: #d9d9d9; stroke: #4a5a66; stroke-width: 0.8; }
     align-items: center;
     gap: 8px;
     padding: 8px 14px;
-    border: 1.5px dashed var(--color-borde);
+    border: 1.5px dashed var(--aqua);
     border-radius: 6px;
-    background: var(--color-superficie);
-    color: var(--color-primario);
+    background: #fff;
+    color: var(--aqua-text);
     font-size: 0.88rem;
     font-weight: 600;
     cursor: pointer;
 }
 .btn-elegir-foto::before { content: "+"; font-size: 1.15rem; line-height: 1; }
-.btn-elegir-foto:hover { background: var(--color-superficie-alt); border-color: var(--color-primario); }
+.btn-elegir-foto:hover { background: var(--aqua-50); border-color: var(--aqua-text); }
 .input-foto:focus-visible + .btn-elegir-foto { outline: 3px solid var(--color-acento); outline-offset: 2px; }
 
 .error-foto { margin-top: 6px; font-size: 0.82rem; color: var(--color-peligro, #8f1d18); }
@@ -319,22 +321,24 @@ svg .seg-sin_eval  { fill: #d9d9d9; stroke: #4a5a66; stroke-width: 0.8; }
 .btn-quitar-foto:hover { background-color: var(--color-superficie-alt); }
 
 .seccion-control { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--color-borde); }
-.seccion-control h3 { margin: 0 0 4px; font-size: 0.9rem; }
+.seccion-control h3 { margin: 0 0 4px; font-size: 0.9rem; color: var(--navy); }
+.cajon h3 { color: var(--navy); }
 
+/* "Guardar foto" = acción principal del bloque de control: aqua */
 .btn-guardar-foto {
-    background-color: var(--color-primario);
-    color: #fff;
+    background-color: var(--aqua);
+    color: var(--navy);
     border: 0;
     border-radius: 6px;
     padding: 8px 14px;
     font: inherit;
     font-size: 0.88rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     margin-top: 8px;
 }
 .btn-guardar-foto:disabled { opacity: 0.45; cursor: not-allowed; }
-.btn-guardar-foto:hover:not(:disabled) { background-color: var(--color-primario-oscuro); }
+.btn-guardar-foto:hover:not(:disabled) { background-color: var(--aqua-hover); }
 
 .miniatura-foto { margin-top: 12px; }
 .miniatura-foto img {
@@ -396,13 +400,14 @@ svg .seg-sin_eval  { fill: #d9d9d9; stroke: #4a5a66; stroke-width: 0.8; }
     font-size: 0.95rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--color-texto-suave);
+    color: var(--navy);
 }
 
+/* Contador redondo: chip aqua claro con texto navy */
 .tablero .col h2 em {
     font-style: normal;
-    background-color: var(--color-primario);
-    color: #fff;
+    background-color: var(--aqua-100);
+    color: var(--navy);
     border-radius: 999px;
     padding: 1px 9px;
     font-size: 0.82rem;
@@ -427,7 +432,7 @@ svg .seg-sin_eval  { fill: #d9d9d9; stroke: #4a5a66; stroke-width: 0.8; }
 /* Borde izquierdo por estado, como en la maqueta (el turquesa nunca indica estado) */
 .tarjeta-ticket { border-left: 4px solid var(--color-borde); }
 .tarjeta-ticket.pendiente { border-left-color: #d8a800; }
-.tarjeta-ticket.en_reparacion { border-left-color: #0b4f9e; }
+.tarjeta-ticket.en_reparacion { border-left-color: var(--aqua); }
 .tarjeta-ticket.solucionado { border-left-color: #1a6b34; }
 
 .fila-tarjeta {
@@ -474,21 +479,25 @@ svg .seg-sin_eval  { fill: #d9d9d9; stroke: #4a5a66; stroke-width: 0.8; }
     border: 1px solid transparent;
     color: #fff;
 }
-.form-tarjeta .btn-secundario { background-color: #0b4f9e; }
-.form-tarjeta .btn-secundario:hover { background-color: #093f7e; }
+/* "Marcar en reparación" = navy (avanza el flujo sin cerrarlo).
+   "Marcar solucionado" (.btn-exito) sigue VERDE: no se toca. */
+.form-tarjeta .btn-secundario { background-color: var(--navy); }
+.form-tarjeta .btn-secundario:hover { background-color: #00496a; }
 .form-tarjeta .btn-exito { background-color: var(--exito-texto); }
 .form-tarjeta .btn-exito:hover { background-color: #166030; }
 
 /* La tarjeta solucionada no muestra botón: queda solo como registro
    del día (los valores internos de estado no cambian). */
 
-/* ── Toast ── */
+/* ── Toast ──
+   Confirmación flotante: pieza CHICA de feedback, no una superficie
+   grande; navy para contraste sobre el fondo aqua-50. */
 .toast {
     position: fixed;
     left: 50%;
     bottom: 22px;
     transform: translate(-50%, 20px);
-    background-color: var(--color-primario-oscuro);
+    background-color: var(--navy);
     color: #fff;
     padding: 11px 18px;
     border-radius: 8px;

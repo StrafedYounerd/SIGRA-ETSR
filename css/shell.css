@@ -1,11 +1,10 @@
 /* ============================================================
    SIGRA-ETSR · Componente B
-   css/shell.css — Topbar + tabbar (móvil) + menú de usuario
+   css/shell.css — Topbar clara + tabbar (móvil) + menú de usuario
    ============================================================
-   Reemplaza al rail lateral (reglas .rail en mapa.css, hoy sin uso)
-   y a la barra-superior histórica. Consume los tokens de theme.css:
-   nada de colores nuevos salvo tonos derivados del navy para texto
-   secundario sobre fondo oscuro.
+   Paleta de marca AccessNet (tokens en theme.css): barra BLANCA
+   con línea superior aqua, texto navy, pestaña activa con borde
+   inferior aqua. Ninguna superficie grande en azul oscuro.
 
    Breakpoint único: 720px (el mismo que el resto de la app).
 */
@@ -18,18 +17,21 @@
     display: flex;
     align-items: center;
     gap: 24px;
-    min-height: 56px;
-    padding: env(safe-area-inset-top, 0px) 20px 0;
-    background-color: var(--color-primario);
-    color: #ffffff;
-    box-shadow: var(--sombra);
+    height: var(--topbar-h);
+    padding: 0 20px;
+    padding-top: env(safe-area-inset-top, 0px);
+    box-sizing: content-box;
+    background: #fff;
+    color: var(--navy);
+    border-bottom: 1px solid var(--line);
+    border-top: 4px solid var(--aqua);
 }
 
 .brand {
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #ffffff;
+    color: var(--navy);
     text-decoration: none;
     font-weight: 700;
     letter-spacing: 0.01em;
@@ -38,36 +40,37 @@
 
 .brand img {
     display: block;
-    height: 28px;
-    width: auto;
+    height: 30px;
+    width: auto;   /* sin pastilla blanca: el logo ya se ve bien sobre blanco */
 }
 
 /* Pestañas de escritorio */
 .topnav {
     display: flex;
     gap: 4px;
-    align-self: stretch;
-    margin-left: auto;
+    height: 100%;
+    margin-right: auto;
 }
 
 .topnav a {
     display: flex;
     align-items: center;
     padding: 0 14px;
-    color: #cfe0e8;
+    color: var(--muted);
     text-decoration: none;
     font-size: 0.95rem;
+    font-weight: 600;
     border-bottom: 3px solid transparent;
 }
 
 .topnav a:hover {
-    color: #ffffff;
+    color: var(--navy);
+    background: var(--aqua-50);
 }
 
 .topnav a.is-active {
-    color: #ffffff;
-    border-bottom-color: var(--color-acento);
-    font-weight: 600;
+    color: var(--navy);
+    border-bottom-color: var(--aqua);
 }
 
 /* ── Menú de usuario (avatar + panel con Cerrar sesión) ── */
@@ -82,7 +85,7 @@
     gap: 10px;
     background: transparent;
     border: 0;
-    color: #ffffff;
+    color: var(--navy);
     cursor: pointer;
     padding: 6px 8px;
     border-radius: 10px;
@@ -92,7 +95,7 @@
 
 .usermenu__btn:hover,
 .usermenu__btn:focus-visible {
-    background-color: rgba(255, 255, 255, 0.08);
+    background: var(--aqua-50);
 }
 
 .usermenu__btn:focus-visible {
@@ -106,8 +109,8 @@
     border-radius: 50%;
     display: grid;
     place-items: center;
-    background-color: var(--color-acento);
-    color: var(--color-primario);
+    background-color: var(--aqua);
+    color: var(--navy);
     font-weight: 700;
     font-size: 0.8rem;
     flex: none;
@@ -121,7 +124,7 @@
 }
 
 .usermenu__who small {
-    color: #9fc0cf;
+    color: var(--muted);
     font-size: 0.78rem;
 }
 
@@ -130,36 +133,37 @@
     right: 0;
     top: calc(100% + 8px);
     min-width: 220px;
-    background-color: var(--color-superficie);
-    color: var(--color-texto);
+    background: #fff;
+    color: var(--ink);
+    border: 1px solid var(--line);
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 30, 45, 0.25);
+    box-shadow: 0 10px 30px rgba(0, 56, 82, 0.15);
     overflow: hidden;
-    border: 1px solid var(--color-borde-suave);
 }
 
 .usermenu__head {
     display: flex;
     flex-direction: column;
     padding: 14px 16px;
-    border-bottom: 1px solid var(--color-borde-suave);
+    background: var(--aqua-50);
+    border-bottom: 1px solid var(--line);
 }
 
 .usermenu__head small {
-    color: var(--color-texto-suave);
+    color: var(--muted);
     font-size: 0.8rem;
 }
 
 .usermenu__panel a {
     display: block;
     padding: 14px 16px;
-    color: var(--peligro-texto);
+    color: #b42318;
     text-decoration: none;
     font-weight: 600;
 }
 
 .usermenu__panel a:hover {
-    background-color: var(--color-superficie-alt);
+    background: #fff5f4;
 }
 
 /* ── Tabbar móvil: oculta en escritorio ── */
@@ -171,13 +175,15 @@
 .contenido-app {
     display: flex;
     flex-direction: column;
-    min-height: calc(100vh - 56px);
+    /* topbar = --topbar-h + 4px de línea aqua superior (content-box) */
+    min-height: calc(100vh - var(--topbar-h) - 4px);
 }
 
 /* ── Móvil: pestañas pasan a barra inferior fija ── */
 @media (max-width: 720px) {
     .topbar {
-        padding: env(safe-area-inset-top, 0px) 12px 0;
+        padding: 0 12px;
+        padding-top: env(safe-area-inset-top, 0px);
         gap: 12px;
     }
 
@@ -201,7 +207,7 @@
     .usermenu__panel {
         position: fixed;
         right: 12px;
-        top: calc(56px + env(safe-area-inset-top, 0px) + 6px);
+        top: calc(var(--topbar-h) + 4px + env(safe-area-inset-top, 0px) + 6px);
     }
 
     .tabbar {
@@ -211,20 +217,20 @@
         bottom: 0;
         z-index: 50;
         display: flex;
-        background-color: var(--color-superficie);
-        border-top: 1px solid var(--color-borde);
+        background: #fff;
+        border-top: 1px solid var(--line);
         padding-bottom: env(safe-area-inset-bottom, 0px);
         box-shadow: 0 -2px 8px rgba(0, 42, 61, 0.06);
     }
 
     .tabbar a {
         flex: 1;
-        min-height: 56px;
+        min-height: var(--tabbar-h);
         display: flex;
         align-items: center;
         justify-content: center;
         text-decoration: none;
-        color: var(--color-texto-suave);
+        color: var(--muted);
         font-size: 0.85rem;
         font-weight: 600;
         border-top: 3px solid transparent;
@@ -233,13 +239,14 @@
     }
 
     .tabbar a.is-active {
-        color: var(--color-primario);
-        border-top-color: var(--color-acento);
+        color: var(--navy);
+        border-top-color: var(--aqua);
+        background: var(--aqua-50);
     }
 
     /* La barra inferior no tapa el contenido */
     .contenido-app {
-        padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 16px);
+        padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 16px);
     }
 }
 
@@ -294,8 +301,8 @@
     gap: 6px;
     min-height: 104px;
     padding: 18px 14px;
-    background-color: var(--color-superficie);
-    border: 2px solid var(--color-borde);
+    background-color: #fff;
+    border: 2px solid var(--line);
     border-radius: var(--radio);
     cursor: pointer;
     text-align: center;
@@ -303,8 +310,8 @@
 }
 
 .room:hover {
-    border-color: var(--color-acento-texto);
-    box-shadow: var(--sombra-hover);
+    border-color: var(--aqua-200);
+    box-shadow: 0 2px 12px rgba(0, 56, 82, 0.08);
 }
 
 /* Radio invisible pero presente: el teclado sigue funcionando */
@@ -317,7 +324,7 @@
 }
 
 .room__input:focus-visible {
-    outline: 3px solid var(--color-acento);
+    outline: 3px solid var(--aqua);
     outline-offset: 2px;
 }
 
@@ -325,7 +332,7 @@
     font-weight: 600;
     font-size: 1.02rem;
     line-height: 1.25;
-    color: var(--color-primario);
+    color: var(--navy);
     overflow-wrap: anywhere;
 }
 
@@ -335,26 +342,63 @@
     height: 10px;
     border-radius: 50%;
     background-color: transparent;
-    border: 2px solid var(--color-borde);
+    border: 2px solid var(--line);
     transition: background-color 0.15s, border-color 0.15s;
 }
 
+/* Respaldo sin :has(): el punto y el nombre marcan la elección */
 .room__input:checked ~ .room__check {
-    background-color: var(--color-acento);
-    border-color: var(--color-acento-texto);
+    background-color: var(--aqua);
+    border-color: var(--aqua-text);
 }
 
 .room__input:checked ~ .room__nombre {
-    color: var(--color-acento-texto);
+    color: var(--aqua-text);
 }
 
-/* Realce completo de la tarjeta en navegadores modernos */
+/* Realce completo de la tarjeta elegida (navegadores modernos) */
 .room:has(.room__input:checked) {
-    border-color: var(--color-acento);
-    box-shadow: var(--sombra-hover);
+    border-color: var(--aqua);
+    background: var(--aqua-50);
+    box-shadow: 0 0 0 3px var(--aqua-100);
+}
+
+.room:has(.room__input:focus-visible) {
+    outline: 3px solid var(--aqua);
+    outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
     .room { transition: none; }
     .room__check { transition: none; }
 }
+
+/* ============================================================
+   Botones del panel admin (clases explícitas del menú de acciones)
+   ============================================================
+   .btn-primary = aqua con texto navy (acción más importante);
+   .btn-secondary = navy con texto blanco (el azul oscuro solo
+   vive en botones y texto, nunca como superficie grande). */
+.btn-primary {
+    background-color: var(--aqua);
+    color: var(--navy);
+    border: 0;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-primary:hover { background-color: var(--aqua-hover); }
+.btn-primary:focus-visible { outline: 3px solid var(--navy); outline-offset: 2px; }
+
+.btn-secondary {
+    background-color: var(--navy);
+    color: #ffffff;
+    border: 0;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-secondary:hover { background-color: #00496a; }
+.btn-secondary:focus-visible { outline: 3px solid var(--aqua); outline-offset: 2px; }

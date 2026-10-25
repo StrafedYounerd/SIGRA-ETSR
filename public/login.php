@@ -102,9 +102,9 @@ function redirigirSegunRol($rol) {
     <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
     <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
     <title>SIGRA-ETSR · Iniciar sesión</title>
-    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="stylesheet" href="/css/theme.css?v=7">
     <link rel="stylesheet" href="/css/estilos.css?v=5">
-    <link rel="stylesheet" href="/css/login.css?v=2">
+    <link rel="stylesheet" href="/css/login.css?v=3">
 </head>
 <body class="cuerpo-login">
 
