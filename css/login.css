@@ -1,51 +1,155 @@
 /* ============================================================
-   SIGRA-ETSR · css/login.css — Pantalla de ingreso
+   SIGRA-ETSR · css/login.css — Pantalla de ingreso (split)
    ============================================================
-   Paleta de marca: fondo con degradé suave aqua, tarjeta de
-   login blanca centrada, botón principal aqua con texto navy.
-   El panel navy de la maqueta vieja queda oculto (ninguna
-   superficie grande en azul oscuro).
+   Panel izquierdo (55%): gradiente de marca navy→aqua con la red
+   animada en canvas. Panel derecho (45%): formulario blanco.
+   En móvil (<=720px) la marca pasa a una franja superior de ~170px
+   (sin canvas ni puntos) y el formulario ocupa el resto.
+
+   Animaciones: solo transform y opacity, todas dentro de
+   prefers-reduced-motion: no-preference. Con reduce: nada se
+   mueve y todo queda en su estado final visible.
 */
 
 .login {
     display: flex;
-    align-items: center;
-    justify-content: center;
     min-height: 100vh;
-    padding: 24px;
-    background: linear-gradient(160deg, var(--aqua-50), var(--aqua-100));
+    min-height: 100dvh;
+}
+
+/* ── Panel de marca (izquierda, 55%, gradiente + canvas) ── */
+.login-marca {
+    flex: 55;
+    background: linear-gradient(145deg, #003852 0%, #006a7a 60%, #00c4cc 130%);
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    padding: 56px;
     box-sizing: border-box;
 }
 
-/* ── Panel de marca navy: oculto en la paleta clara (el canvas y
-   su botón de pausa siguen en el DOM, invisibles) ── */
-.login-marca {
-    display: none;
+.login-marca canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
 }
 
-/* ── Formulario: tarjeta blanca centrada sobre el degradé ── */
+.login-marca .pausa {
+    position: absolute;
+    top: 18px;
+    left: 20px;
+    z-index: 2;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #d6e4ec;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.login-marca .texto {
+    position: relative;
+    max-width: 30rem;
+}
+
+/* Logo en pastilla blanca: el PNG de AccessNet tiene trazo navy que
+   sobre el gradiente navy no se vería. Solo acá se usa el recuadro. */
+.logo-pastilla {
+    display: inline-flex;
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 9px 12px;
+    margin-bottom: 22px;
+}
+
+.logo-pastilla img {
+    display: block;
+    height: 30px;
+    width: auto;
+}
+
+.login-marca h1 {
+    font-size: clamp(2rem, 3.6vw, 3rem);
+    line-height: 1.05;
+    margin: 0 0 10px;
+    letter-spacing: -0.02em;
+    font-weight: 800;
+    color: #fff;
+}
+
+.login-marca .frase {
+    margin: 0 0 26px;
+    color: #d6f4f6;
+    font-size: 1.05rem;
+    line-height: 1.5;
+}
+
+/* ── Tres puntos con ícono SVG ── */
+.puntos {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.puntos li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.98rem;
+    color: #eafafc;
+}
+
+.puntos svg {
+    width: 22px;
+    height: 22px;
+    flex: none;
+    fill: none;
+    stroke: #00c4cc;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Trazos internos (líneas del globo de diálogo) en blanco */
+.puntos svg .trazo {
+    stroke: #fff;
+    stroke-width: 1.6;
+    fill: none;
+}
+
+/* ── Formulario (derecha, 45%, blanco) ── */
 .login-form {
+    flex: 45;
     background-color: #fff;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    width: 100%;
-    max-width: 430px;
-    padding: 40px clamp(28px, 6vw, 48px);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 56, 82, 0.12);
+    padding: 40px clamp(28px, 5vw, 72px);
     box-sizing: border-box;
 }
 
-/* Relación de tamaños de la maqueta: AccessNet 36px, ETSR 46px,
-   divisor fino entre ambos. Sin fondo blanco ni borde en el logo:
-   el PNG ya es transparente. */
+/* Bloque de 400px centrado dentro del 45% */
+.login-form > * {
+    width: 100%;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .marcas {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 16px;
-    margin-bottom: 40px;
+    margin-bottom: 34px;
 }
 
 .marcas img {
@@ -58,70 +162,294 @@
 .marcas i {
     width: 1px;
     height: 38px;
-    background-color: var(--color-borde);
+    background-color: var(--line, #d6e6ea);
 }
 
 .login-form h2 {
     margin: 0 0 4px;
     font-size: 1.5rem;
-    color: var(--color-primario);
+    text-align: center;
+    color: var(--navy, #003852);
 }
 
 .login-form .sub {
     margin: 0 0 24px;
-    color: var(--color-texto-suave);
+    color: var(--muted, #5f7a86);
     font-size: 0.95rem;
+    text-align: center;
 }
 
+/* ── Campos: inputs de 48px, foco aqua con halo ── */
 .campo {
     display: block;
     margin-bottom: 16px;
     font-size: 0.9rem;
     font-weight: 600;
+    color: var(--ink, #12303f);
+    transition: color 160ms cubic-bezier(.2, .7, .2, 1);
 }
 
 .campo input {
     display: block;
     width: 100%;
+    height: 48px;
+    box-sizing: border-box;
     margin-top: 6px;
-    padding: 11px 12px;
+    padding: 0 14px;
     font: inherit;
     font-weight: 400;
-    border: 1px solid var(--color-borde);
-    border-radius: 6px;
+    border: 1.5px solid var(--line, #d6e6ea);
+    border-radius: 10px;
     background-color: #fff;
-    color: var(--color-texto);
+    color: var(--ink, #12303f);
+    transition: border-color 160ms cubic-bezier(.2, .7, .2, 1),
+                box-shadow 160ms cubic-bezier(.2, .7, .2, 1);
+}
+
+/* Al enfocar: borde aqua + halo aqua claro; la etiqueta pasa a
+   aqua legible (#007c84, nunca #00c4cc como texto) */
+.campo:focus-within {
+    color: #007c84;
 }
 
 .campo input:focus {
     outline: none;
-    border-color: var(--color-acento);
-    box-shadow: 0 0 0 3px rgba(0, 196, 204, 0.25);
+    border-color: #00c4cc;
+    box-shadow: 0 0 0 3px #d6f4f6;
 }
 
-/* Botón principal: aqua con texto navy */
+/* ── Botón "Ingresar": aqua con texto navy ── */
 .btn {
-    background-color: var(--aqua);
-    color: var(--navy);
+    background-color: #00c4cc;
+    color: #003852;
     border: 0;
     border-radius: 10px;
-    padding: 12px 20px;
+    height: 48px;
+    padding: 0 20px;
     font: inherit;
     font-weight: 700;
     cursor: pointer;
+    margin-top: 6px;
+    transition: transform 160ms cubic-bezier(.2, .7, .2, 1),
+                background-color 160ms cubic-bezier(.2, .7, .2, 1);
 }
 
-.btn:hover { background-color: var(--aqua-hover); }
-.btn:focus-visible { outline: 3px solid var(--navy); outline-offset: 2px; }
+.btn:hover {
+    background-color: #00aab1;
+    transform: translateY(-1px);
+}
+
+.btn:active {
+    transform: scale(.97);
+}
+
+/* Estado de envío: spinner + texto atenuado. El botón NO se
+   deshabilita: el submit sigue su curso normal hacia el server. */
+.btn.is-loading {
+    position: relative;
+    color: rgba(0, 56, 82, .35);
+}
+
+.btn.is-loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border-radius: 50%;
+    border: 3px solid rgba(0, 56, 82, .25);
+    border-top-color: #003852;
+    animation: girar 700ms linear infinite;
+}
+
+@keyframes girar {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Pie con escudo de la escuela ── */
+.pie-escudo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 34px;
+}
+
+.pie-escudo .escudo {
+    height: 64px;
+    width: auto;
+}
 
 .pie-login {
-    margin-top: 36px;
-    color: var(--color-texto-suave);
+    margin: 0;
+    color: var(--muted, #5f7a86);
     font-size: 0.85rem;
+    text-align: center;
 }
 
-/* ── Responsive: en pantallas angostas la tarjeta ocupa el ancho ── */
-@media (max-width: 900px) {
-    .login { padding: 16px; }
-    .login-form { margin: 0; }
+/* ── Mensaje de error (texto del PHP, intacto) ── */
+.mensaje-error {
+    margin-bottom: 16px;
+}
+
+/* ============================================================
+   ANIMACIONES — solo con movimiento permitido.
+   Con prefers-reduced-motion: reduce nada corre y todos los
+   elementos quedan visibles en su posición final.
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+    /* Panel derecho: fade + subida de 16px (450ms) */
+    .login-form {
+        animation: entra-panel 450ms cubic-bezier(.2, .7, .2, 1) backwards;
+    }
+
+    /* Campos del formulario escalonados cada 80ms */
+    .login-form .campo:nth-of-type(1) {
+        animation: entra-campo 350ms cubic-bezier(.2, .7, .2, 1) 300ms backwards;
+    }
+
+    .login-form .campo:nth-of-type(2) {
+        animation: entra-campo 350ms cubic-bezier(.2, .7, .2, 1) 380ms backwards;
+    }
+
+    .login-form .btn {
+        animation: entra-campo 350ms cubic-bezier(.2, .7, .2, 1) 460ms backwards;
+    }
+
+    /* Panel izquierdo: elementos escalonados cada 120ms */
+    .logo-pastilla {
+        animation: entra-panel 400ms cubic-bezier(.2, .7, .2, 1) backwards;
+    }
+
+    .login-marca h1 {
+        animation: entra-panel 400ms cubic-bezier(.2, .7, .2, 1) 120ms backwards;
+    }
+
+    .login-marca .frase {
+        animation: entra-panel 400ms cubic-bezier(.2, .7, .2, 1) 240ms backwards;
+    }
+
+    .puntos li {
+        animation: entra-punto 400ms cubic-bezier(.2, .7, .2, 1) backwards;
+    }
+
+    .puntos li:nth-child(1) { animation-delay: 360ms; }
+    .puntos li:nth-child(2) { animation-delay: 480ms; }
+    .puntos li:nth-child(3) { animation-delay: 600ms; }
+
+    /* "Pop" de los íconos SVG al entrar */
+    .puntos svg {
+        animation: pop-icono 320ms cubic-bezier(.2, .7, .2, 1) backwards;
+    }
+
+    .puntos li:nth-child(1) svg { animation-delay: 400ms; }
+    .puntos li:nth-child(2) svg { animation-delay: 520ms; }
+    .puntos li:nth-child(3) svg { animation-delay: 640ms; }
+
+    /* Error de login: el mensaje baja con fade y el formulario
+       sacude horizontalmente (±6px). El texto del error no cambia. */
+    .login-form .mensaje-error {
+        animation: entra-msg 320ms cubic-bezier(.2, .7, .2, 1) backwards;
+    }
+
+    .login-form .mensaje-error ~ form {
+        animation: sacude 360ms cubic-bezier(.2, .7, .2, 1) 150ms backwards;
+    }
+}
+
+@keyframes entra-panel {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes entra-campo {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes entra-punto {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pop-icono {
+    0%   { opacity: 0; transform: scale(.4); }
+    70%  { opacity: 1; transform: scale(1.18); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes entra-msg {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sacude {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+
+/* ============================================================
+   Móvil (<=720px): la marca pasa a una franja superior de ~170px
+   con logo + título (SIN puntos y SIN canvas); el formulario
+   ocupa el resto. Márgenes de 20px, sin scroll horizontal.
+   ============================================================ */
+@media (max-width: 720px) {
+    .login {
+        flex-direction: column;
+    }
+
+    .login-marca {
+        flex: none;
+        min-height: 170px;
+        padding: 24px 20px;
+        align-items: flex-start;
+    }
+
+    /* Sin canvas ni puntos en la franja */
+    .login-marca canvas,
+    .login-marca .pausa,
+    .puntos {
+        display: none;
+    }
+
+    .login-marca .texto {
+        max-width: none;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 100%;
+    }
+
+    .logo-pastilla {
+        margin-bottom: 0;
+        padding: 7px 9px;
+        align-self: flex-start;
+    }
+
+    .logo-pastilla img { height: 24px; }
+
+    .login-marca h1 {
+        font-size: 1.35rem;
+        margin: 0;
+    }
+
+    .login-marca .frase {
+        margin: 0;
+        font-size: 0.85rem;
+    }
+
+    .login-form {
+        flex: 1;
+        padding: 28px 20px;
+        justify-content: flex-start;
+    }
+
+    .login-form > * {
+        max-width: none;
+    }
 }

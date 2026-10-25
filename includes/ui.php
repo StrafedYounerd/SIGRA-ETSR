@@ -88,7 +88,7 @@ function ui_head($opciones) {
     <link rel="stylesheet" href="/css/theme.css?v=7">
     <link rel="stylesheet" href="/css/estilos.css?v=8">
     <link rel="stylesheet" href="/css/mapa.css?v=10">
-    <link rel="stylesheet" href="/css/shell.css?v=3"><!-- topbar + tabbar + usermenu + roomgrid -->
+    <link rel="stylesheet" href="/css/shell.css?v=4"><!-- topbar + tabbar + usermenu + roomgrid + animaciones -->
 </head>
 <body class="cuerpo-app">
 
@@ -149,7 +149,7 @@ function ui_foot() {
         </div>
 </main>
 
-<script src="/js/shell.js"></script>
+<script src="/js/shell.js?v=2"></script>
 </body>
 </html>
 <?php

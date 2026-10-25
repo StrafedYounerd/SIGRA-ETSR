@@ -24,19 +24,19 @@ ui_head(['titulo' => 'Panel de administración', 'activo' => 'panel']);
              Dispositivos registrados y Tickets activos. -->
         <div class="panel-resumen">
             <div class="tarjeta-resumen">
-                <div class="tarjeta-cifra"><?php echo $total_usuarios; ?></div>
+                <div class="tarjeta-cifra" data-countup><?php echo $total_usuarios; ?></div>
                 <div class="tarjeta-etiqueta">Usuarios activos</div>
             </div>
             <div class="tarjeta-resumen">
-                <div class="tarjeta-cifra"><?php echo $total_salas; ?></div>
+                <div class="tarjeta-cifra" data-countup><?php echo $total_salas; ?></div>
                 <div class="tarjeta-etiqueta">Salas activas</div>
             </div>
             <div class="tarjeta-resumen">
-                <div class="tarjeta-cifra"><?php echo $total_pcs; ?></div>
+                <div class="tarjeta-cifra" data-countup><?php echo $total_pcs; ?></div>
                 <div class="tarjeta-etiqueta">Dispositivos registrados</div>
             </div>
             <div class="tarjeta-resumen">
-                <div class="tarjeta-cifra"><?php echo $tickets_activos; ?></div>
+                <div class="tarjeta-cifra" data-countup><?php echo $tickets_activos; ?></div>
                 <div class="tarjeta-etiqueta">Tickets activos</div>
             </div>
         </div>

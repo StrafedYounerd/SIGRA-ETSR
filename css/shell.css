@@ -9,6 +9,28 @@
    Breakpoint único: 720px (el mismo que el resto de la app).
 */
 
+/* ── Curvas y tiempos base del sistema de animaciones ──
+   Solo transform y opacity; con prefers-reduced-motion nada corre. */
+:root {
+    --ease: cubic-bezier(.2, .7, .2, 1);
+    --t-fast: 160ms;   /* micro-interacciones */
+    --t-med: 320ms;    /* entradas */
+}
+
+/* ── View Transitions (mejora progresiva) ──
+   En navegadores sin soporte (Chrome <126, Firefox) simplemente no
+   anima: la navegación queda como siempre. La topbar y la tabbar
+   quedan fijas mientras el contenido hace crossfade de 220ms. */
+@view-transition { navigation: auto; }
+
+.topbar { view-transition-name: topbar; }
+.tabbar { view-transition-name: tabbar; }
+
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 220ms;
+}
+
 /* ── Topbar (escritorio y móvil) ── */
 .topbar {
     position: sticky;
@@ -53,6 +75,7 @@
 }
 
 .topnav a {
+    position: relative;
     display: flex;
     align-items: center;
     padding: 0 14px;
@@ -60,7 +83,21 @@
     text-decoration: none;
     font-size: 0.95rem;
     font-weight: 600;
-    border-bottom: 3px solid transparent;
+}
+
+/* Subrayado aqua que crece desde el centro (solo transform) */
+.topnav a::after {
+    content: "";
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 0;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    background-color: var(--aqua);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform var(--t-fast) var(--ease);
 }
 
 .topnav a:hover {
@@ -68,9 +105,16 @@
     background: var(--aqua-50);
 }
 
+.topnav a:hover::after {
+    transform: scaleX(1);
+}
+
 .topnav a.is-active {
     color: var(--navy);
-    border-bottom-color: var(--aqua);
+}
+
+.topnav a.is-active::after {
+    transform: scaleX(1);   /* la pestaña activa mantiene el subrayado */
 }
 
 /* ── Menú de usuario (avatar + panel con Cerrar sesión) ── */
@@ -114,6 +158,13 @@
     font-weight: 700;
     font-size: 0.8rem;
     flex: none;
+    transition: transform var(--t-fast) var(--ease);
+}
+
+/* El avatar crece apenas al pasar por el botón */
+.usermenu__btn:hover .avatar,
+.usermenu__btn:focus-visible .avatar {
+    transform: scale(1.06);
 }
 
 .usermenu__who {
@@ -139,6 +190,20 @@
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 56, 82, 0.15);
     overflow: hidden;
+    transform-origin: top right;   /* la apertura escala desde el avatar */
+}
+
+/* Apertura: fade + escala .96→1 (180ms). Corre cada vez que el
+   panel deja de estar hidden; con reduce no corre y solo aparece. */
+@media (prefers-reduced-motion: no-preference) {
+    .usermenu__panel {
+        animation: abre-menu 180ms var(--ease);
+    }
+}
+
+@keyframes abre-menu {
+    from { opacity: 0; transform: scale(.96); }
+    to   { opacity: 1; transform: scale(1); }
 }
 
 .usermenu__head {
@@ -224,6 +289,7 @@
     }
 
     .tabbar a {
+        position: relative;
         flex: 1;
         min-height: var(--tabbar-h);
         display: flex;
@@ -238,10 +304,31 @@
         text-align: center;
     }
 
+    /* Indicador aqua de la pestaña activa: aparece deslizándose
+       desde el centro + fade (solo transform y opacity) */
+    .tabbar a::after {
+        content: "";
+        position: absolute;
+        top: -3px;
+        left: 20%;
+        right: 20%;
+        height: 3px;
+        border-radius: 0 0 3px 3px;
+        background-color: var(--aqua);
+        transform: scaleX(0);
+        opacity: 0;
+        transition: transform var(--t-med) var(--ease),
+                    opacity var(--t-med) var(--ease);
+    }
+
     .tabbar a.is-active {
         color: var(--navy);
-        border-top-color: var(--aqua);
         background: var(--aqua-50);
+    }
+
+    .tabbar a.is-active::after {
+        transform: scaleX(1);
+        opacity: 1;
     }
 
     /* La barra inferior no tapa el contenido */
@@ -306,12 +393,15 @@
     border-radius: var(--radio);
     cursor: pointer;
     text-align: center;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition: border-color var(--t-fast) var(--ease),
+                box-shadow 200ms var(--ease),
+                transform 200ms var(--ease);
 }
 
 .room:hover {
     border-color: var(--aqua-200);
     box-shadow: 0 2px 12px rgba(0, 56, 82, 0.08);
+    transform: translateY(-2px);   /* elevación suave (ítem 6) */
 }
 
 /* Radio invisible pero presente: el teclado sigue funcionando */
@@ -402,3 +492,242 @@
 
 .btn-secondary:hover { background-color: #00496a; }
 .btn-secondary:focus-visible { outline: 3px solid var(--aqua); outline-offset: 2px; }
+
+/* ============================================================
+   SISTEMA DE ANIMACIONES (ítems 2-13 de la Parte B)
+   Solo transform y opacity. Todo lo que sea entrada vive dentro
+   de prefers-reduced-motion: no-preference; con reduce nada corre
+   y todo queda en su estado final visible.
+   ============================================================ */
+
+/* ── Botones: hover sube 1px, :active escala .97, color 150ms ── */
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-secundario,
+.btn-exito {
+    transition: transform var(--t-fast) var(--ease),
+                box-shadow var(--t-fast) var(--ease),
+                background-color 150ms var(--ease);
+}
+
+.btn:hover,
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-secundario:hover,
+.btn-exito:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 42, 61, 0.18);
+}
+
+.btn:active,
+.btn-primary:active,
+.btn-secondary:active,
+.btn-secundario:active,
+.btn-exito:active {
+    transform: scale(.97);
+}
+
+/* ── Tarjetas: hover eleva 2px con sombra más marcada (200ms) ──
+   (las de sala ya lo hacen arriba; estas son los contadores del
+   admin y las tarjetas de ticket del panel técnico) */
+.tarjeta-resumen,
+.tarjeta-ticket {
+    transition: transform 200ms var(--ease),
+                box-shadow 200ms var(--ease);
+}
+
+.tarjeta-resumen:hover,
+.tarjeta-ticket:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--sombra-hover);
+}
+
+/* ── Tilde SVG de sala elegida: se dibuja en la esquina ──
+   El SVG lo inyecta js/shell.js (la página no se toca). El trazo
+   se revela con stroke-dashoffset; la opacidad salta al elegir. */
+.room__tilde {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 18px;
+    height: 18px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.room__tilde path {
+    fill: none;
+    stroke: var(--aqua-text);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 24;
+    stroke-dashoffset: 24;
+}
+
+/* "Pop" de la tarjeta elegida + tilde visible. El respaldo sin
+   :has() es la clase .is-checked que agrega js/shell.js. La
+   opacidad del tilde aplica siempre; las animaciones solo con
+   movimiento permitido. */
+.room:has(.room__input:checked) .room__tilde,
+.room.is-checked .room__tilde {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .room:has(.room__input:checked),
+    .room.is-checked {
+        animation: pop-sala 220ms var(--ease);
+    }
+
+    .room:has(.room__input:checked) .room__tilde path,
+    .room.is-checked .room__tilde path {
+        animation: dibuja-tilde 300ms var(--ease) forwards;
+    }
+}
+
+@keyframes pop-sala {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.03); }
+}
+
+@keyframes dibuja-tilde {
+    to { stroke-dashoffset: 0; }
+}
+
+/* ── Puntito del indicador "Actualizado hace X s" ──
+   Late suavemente (opacity .4→1, 1.6s, infinito). */
+.vivo::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--aqua);
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+/* ── flash-change: halo aqua que se desvanece en 1.2s ──
+   Clase de utilidad para el elemento que cambió tras una
+   actualización de datos (la pone js/shell.js: sigraFlash()). */
+.flash-change {
+    position: relative;
+}
+
+.flash-change::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: var(--aqua-100);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ── Filas de tabla: hover en aqua-50 (ítem 13) ──
+   Sobreescribe el #eef7f8 de estilos.css (shell.css carga después). */
+tr:hover {
+    background-color: #effbfc;
+}
+
+/* ── Toast: entra desde abajo con fade en 240ms (ítem 11) ──
+   El comportamiento (agregar/quitar .toast-ver) ya está en mapa.js;
+   acá solo se ajusta el timing. Sale con el mismo fade al retirarse. */
+.toast {
+    transition: opacity 240ms var(--ease),
+                transform 240ms var(--ease);
+}
+
+/* ============================================================
+   ENTRADAS — solo con movimiento permitido (ítems 2, 10 y 13).
+   La app se renderiza entera en el servidor: cada carga de página
+   es la "primera carga", no hay auto-refresco que las repita.
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+
+    /* Hijos directos de <main> (contexto + vista): fade + 12px, 60ms */
+    .contexto {
+        animation: entra-vista 350ms var(--ease) backwards;
+    }
+
+    .contenido-vista {
+        animation: entra-vista 350ms var(--ease) 60ms backwards;
+    }
+
+    /* Tarjetas principales: cajas de las vistas */
+    .caja {
+        animation: entra-vista 350ms var(--ease) 120ms backwards;
+    }
+
+    /* Contadores del admin: escalonados 60ms, máx. 8 */
+    .tarjeta-resumen { animation: entra-vista 350ms var(--ease) backwards; }
+    .tarjeta-resumen:nth-child(1) { animation-delay: 120ms; }
+    .tarjeta-resumen:nth-child(2) { animation-delay: 180ms; }
+    .tarjeta-resumen:nth-child(3) { animation-delay: 240ms; }
+    .tarjeta-resumen:nth-child(4) { animation-delay: 300ms; }
+    .tarjeta-resumen:nth-child(5) { animation-delay: 360ms; }
+    .tarjeta-resumen:nth-child(6) { animation-delay: 420ms; }
+    .tarjeta-resumen:nth-child(7) { animation-delay: 480ms; }
+    .tarjeta-resumen:nth-child(8) { animation-delay: 540ms; }
+
+    /* Tarjetas de ticket del tablero técnico: escalonadas 50ms,
+       máx. 8 (el cambio de estado es POST con recarga: no se toca) */
+    .tarjeta-ticket { animation: entra-vista 350ms var(--ease) backwards; }
+    .tarjeta-ticket:nth-child(1) { animation-delay: 50ms; }
+    .tarjeta-ticket:nth-child(2) { animation-delay: 100ms; }
+    .tarjeta-ticket:nth-child(3) { animation-delay: 150ms; }
+    .tarjeta-ticket:nth-child(4) { animation-delay: 200ms; }
+    .tarjeta-ticket:nth-child(5) { animation-delay: 250ms; }
+    .tarjeta-ticket:nth-child(6) { animation-delay: 300ms; }
+    .tarjeta-ticket:nth-child(7) { animation-delay: 350ms; }
+    .tarjeta-ticket:nth-child(8) { animation-delay: 400ms; }
+    .tarjeta-ticket:nth-child(n + 9) { animation-delay: 400ms; }
+
+    /* Filas de tabla: fade escalonado 25ms, máx. 12 */
+    table tr { animation: entra-fila 300ms var(--ease) backwards; }
+    table tr:nth-child(1)  { animation-delay: 25ms; }
+    table tr:nth-child(2)  { animation-delay: 50ms; }
+    table tr:nth-child(3)  { animation-delay: 75ms; }
+    table tr:nth-child(4)  { animation-delay: 100ms; }
+    table tr:nth-child(5)  { animation-delay: 125ms; }
+    table tr:nth-child(6)  { animation-delay: 150ms; }
+    table tr:nth-child(7)  { animation-delay: 175ms; }
+    table tr:nth-child(8)  { animation-delay: 200ms; }
+    table tr:nth-child(9)  { animation-delay: 225ms; }
+    table tr:nth-child(10) { animation-delay: 250ms; }
+    table tr:nth-child(11) { animation-delay: 275ms; }
+    table tr:nth-child(12) { animation-delay: 300ms; }
+    table tr:nth-child(n + 13) { animation-delay: 300ms; }
+
+    /* Latido del puntito vivo */
+    .vivo::before {
+        animation: late-vivo 1.6s ease-in-out infinite;
+    }
+
+    /* Halo de .flash-change: opacidad .8 → 0 en 1.2s */
+    .flash-change::after {
+        animation: halo-flash 1.2s var(--ease);
+    }
+}
+
+@keyframes entra-vista {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes entra-fila {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes late-vivo {
+    0%, 100% { opacity: .4; }
+    50%      { opacity: 1; }
+}
+
+@keyframes halo-flash {
+    from { opacity: .8; }
+    to   { opacity: 0; }
+}

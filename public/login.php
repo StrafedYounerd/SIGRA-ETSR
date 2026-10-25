@@ -102,22 +102,40 @@ function redirigirSegunRol($rol) {
     <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
     <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
     <title>SIGRA-ETSR · Iniciar sesión</title>
-    <link rel="stylesheet" href="/css/theme.css?v=7">
-    <link rel="stylesheet" href="/css/estilos.css?v=5">
-    <link rel="stylesheet" href="/css/login.css?v=3">
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="stylesheet" href="/css/estilos.css?v=8">
+    <link rel="stylesheet" href="/css/login.css?v=5">
 </head>
 <body class="cuerpo-login">
 
 <div class="login">
 
-    <!-- Panel de marca: navy con la red animada (canvas) y el titular.
-         La animación se puede pausar; con prefers-reduced-motion queda estática. -->
+    <!-- Panel de marca: gradiente navy→aqua con la red animada (canvas).
+         La animación se puede pausar; con prefers-reduced-motion queda estática.
+         En móvil (<=720px) queda una franja con logo + título, sin canvas. -->
     <div class="login-marca">
         <canvas id="red" aria-hidden="true"></canvas>
         <button class="pausa" id="pausa" type="button">Pausar movimiento</button>
         <div class="texto">
-            <h1>La sala, a la vista antes de empezar la clase.</h1>
-            <p>Reportá fallas en un toque y seguí cada arreglo hasta que el equipo vuelve a funcionar.</p>
+            <span class="logo-pastilla">
+                <img src="/img/logo-accessnet.png" alt="Logo de AccessNet">
+            </span>
+            <h1>SIGRA-ETSR</h1>
+            <p class="frase">Sistema de gestión y relevamiento de aulas</p>
+            <ul class="puntos">
+                <li>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5 5.2 4l7.3 8.6L19.8 4 22 6.5 12.5 18.5z"/><rect x="3" y="19.5" width="18" height="2.5"/></svg>
+                    Mapa de sala en tiempo real
+                </li>
+                <li>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8.8L4 20V5z"/><path d="M8 9h8M8 12h5" class="trazo"/></svg>
+                    Reportes de fallas con foto
+                </li>
+                <li>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.3.8-4.6 4.3 1.2 6.2L12 17l-5.6 2.9 1.2-6.2L3 9.4l6.3-.8z"/></svg>
+                    Seguimiento de tickets de soporte
+                </li>
+            </ul>
         </div>
     </div>
 
@@ -135,7 +153,7 @@ function redirigirSegunRol($rol) {
             <div class="mensaje-error"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
 
-        <form method="POST" action="login.php">
+        <form method="POST" action="login.php" id="form-login">
             <label class="campo">Usuario
                 <input type="text" id="usuario" name="usuario" autocomplete="username"
                        value="<?php echo htmlspecialchars($usuario ?? ''); ?>">
@@ -145,19 +163,24 @@ function redirigirSegunRol($rol) {
             </label>
             <button class="btn" type="submit">Ingresar</button>
         </form>
-        <p class="pie-login">Desarrollado por AccessNet S.R.L. para la Escuela Técnica Superior de Rivera.</p>
+        <div class="pie-escudo">
+            <img src="/img/logo-etsr.png" alt="Escudo de la Escuela Técnica Superior de Rivera (UTU)" class="escudo">
+            <p class="pie-login">Desarrollado por AccessNet S.R.L. para la Escuela Técnica Superior de Rivera.</p>
+        </div>
     </div>
 
 </div>
 
 <script>
-/* Red animada del panel de marca (igual a la maqueta):
-   nodos turquesa que derivan, se enlazan entre sí y sueltan
-   paquetes. Se pausa con el botón; con prefers-reduced-motion
-   arranca estático. */
+/* Red animada del panel de marca: nodos aqua y blancos que derivan,
+   se enlazan entre sí y sueltan paquetes. Máximo 60 nodos en
+   escritorio; 0 en móvil (<=720px, el canvas ni se ve). Se pausa con
+   el botón, con document.hidden y con prefers-reduced-motion. */
 (function () {
     var cv = document.getElementById("red"), cx = cv.getContext("2d");
-    var run = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var movil = window.matchMedia("(max-width: 720px)");
+    var run = !reduce;
     var W = 0, H = 0, N = [], P = [], raf;
 
     function size() {
@@ -167,12 +190,13 @@ function redirigirSegunRol($rol) {
         W = r.width; H = r.height;
         cv.width = W * d; cv.height = H * d;
         cx.setTransform(d, 0, 0, d, 0, 0);
-        var n = Math.round(Math.min(46, W * H / 16000));
+        var n = movil.matches ? 0 : Math.round(Math.min(60, W * H / 14000));
         N = [];
         for (var i = 0; i < n; i++) {
             N.push({
                 x: Math.random() * W, y: Math.random() * H,
-                vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25
+                vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25,
+                blanco: Math.random() < .35   /* algunos nodos blancos, baja opacidad */
             });
         }
         P = [];
@@ -195,7 +219,9 @@ function redirigirSegunRol($rol) {
                 var d = Math.hypot(dx, dy);
                 if (d < 150) {
                     L.push([i, j]);
-                    cx.strokeStyle = "rgba(0,196,204," + (.34 * (1 - d / 150)) + ")";
+                    /* Alternar enlaces aqua y blancos, ambos con opacidad baja */
+                    var base = (i + j) % 2 === 0 ? "0,196,204" : "255,255,255";
+                    cx.strokeStyle = "rgba(" + base + "," + (.30 * (1 - d / 150)) + ")";
                     cx.lineWidth = 1;
                     cx.beginPath(); cx.moveTo(N[i].x, N[i].y); cx.lineTo(N[j].x, N[j].y); cx.stroke();
                 }
@@ -208,13 +234,13 @@ function redirigirSegunRol($rol) {
         P.forEach(function (p) {
             p.t += .018;
             var a = N[p.l[0]], b = N[p.l[1]];
-            cx.fillStyle = "#00c4cc";
+            cx.fillStyle = "rgba(0,196,204,.9)";
             cx.beginPath();
             cx.arc(a.x + (b.x - a.x) * p.t, a.y + (b.y - a.y) * p.t, 2.6, 0, 7);
             cx.fill();
         });
         N.forEach(function (a) {
-            cx.fillStyle = "rgba(0,196,204,.85)";
+            cx.fillStyle = a.blanco ? "rgba(255,255,255,.55)" : "rgba(0,196,204,.85)";
             cx.beginPath(); cx.arc(a.x, a.y, 2.4, 0, 7); cx.fill();
         });
         if (!once && run) raf = requestAnimationFrame(function () { frame(); });
@@ -231,6 +257,18 @@ function redirigirSegunRol($rol) {
         if (!document.hidden && run) frame();
     });
     size();
+})();
+
+/* Botón "Ingresar": al enviar, spinner + texto atenuado. El botón NO
+   se deshabilita: el submit sigue su curso normal. */
+(function () {
+    var form = document.getElementById("form-login");
+    var btn = form && form.querySelector(".btn");
+    if (form && btn) {
+        form.addEventListener("submit", function () {
+            btn.classList.add("is-loading");
+        });
+    }
 })();
 </script>
 

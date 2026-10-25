@@ -95,7 +95,7 @@ function antiguedad_ticket($fecha) {
 ui_head([
     'titulo' => 'Tickets activos',
     'activo' => 'panel',
-    'datos'  => ['<b>' . count($tickets) . '</b> sin resolver'],
+    'datos'  => ['<b data-countup>' . count($tickets) . '</b> sin resolver'],
     'vivo'   => true,
 ]);
 ?>
@@ -175,7 +175,7 @@ ui_head([
             ?>
 
             <section class="col" aria-label="Pendiente">
-                <h2>Pendiente <em><?php echo count(array_filter($tickets, function ($t) { return $t['estado'] === 'pendiente'; })); ?></em></h2>
+                <h2>Pendiente <em data-countup><?php echo count(array_filter($tickets, function ($t) { return $t['estado'] === 'pendiente'; })); ?></em></h2>
                 <?php
                 $pendientes = array_values(array_filter($tickets, function ($t) { return $t['estado'] === 'pendiente'; }));
                 if ($pendientes) {
@@ -187,7 +187,7 @@ ui_head([
             </section>
 
             <section class="col" aria-label="En reparación">
-                <h2>En reparación <em><?php echo count(array_filter($tickets, function ($t) { return $t['estado'] === 'en_reparacion'; })); ?></em></h2>
+                <h2>En reparación <em data-countup><?php echo count(array_filter($tickets, function ($t) { return $t['estado'] === 'en_reparacion'; })); ?></em></h2>
                 <?php
                 $en_reparacion = array_values(array_filter($tickets, function ($t) { return $t['estado'] === 'en_reparacion'; }));
                 if ($en_reparacion) {
@@ -199,7 +199,7 @@ ui_head([
             </section>
 
             <section class="col" aria-label="Solucionado hoy">
-                <h2>Solucionado hoy <em><?php echo count($solucionados_hoy); ?></em></h2>
+                <h2>Solucionado hoy <em data-countup><?php echo count($solucionados_hoy); ?></em></h2>
                 <?php
                 if ($solucionados_hoy) {
                     foreach ($solucionados_hoy as $t) tarjeta_ticket($t, $fotos_por_ticket);
