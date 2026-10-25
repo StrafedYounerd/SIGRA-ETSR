@@ -8,109 +8,13 @@
    El turquesa de marca NUNCA es un color de estado.
 */
 
-/* ── Layout general del app (rail + principal) ── */
+/* ── Layout general del app (shell: topbar + contenido) ── */
 .cuerpo-app {
     padding: 0;
     margin: 0;
 }
 
-.app {
-    display: flex;
-    min-height: 100vh;
-}
-
-/* ── Rail lateral ── */
-.rail {
-    width: 218px;
-    flex: none;
-    background-color: var(--color-primario);
-    color: #dbe8ef;
-    display: flex;
-    flex-direction: column;
-    padding: 18px 0;
-}
-
-.rail .marca {
-    margin: 0 18px 22px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.rail .tile {
-    background-color: #fff;
-    border-radius: 6px;
-    padding: 8px 10px;
-    display: inline-flex;
-    align-self: flex-start;
-}
-
-.rail .tile img {
-    display: block;
-    height: 24px;
-    width: auto;
-}
-
-.rail .sis {
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    color: #fff;
-    font-size: 1.05rem;
-}
-
-.rail nav {
-    display: flex;
-    flex-direction: column;
-}
-
-.rail nav a {
-    padding: 10px 18px;
-    color: #c4d6e0;
-    text-decoration: none;
-    border-left: 3px solid transparent;
-    font-size: 0.95rem;
-}
-
-.rail nav a[aria-current="page"] {
-    color: #fff;
-    border-left-color: var(--color-acento);
-    background-color: rgba(255, 255, 255, 0.07);
-    font-weight: 600;
-}
-
-.rail nav a:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-.rail .usuario {
-    margin-top: auto;
-    padding: 14px 18px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.14);
-    font-size: 0.85rem;
-    color: #a9c0cd;
-}
-
-.rail .usuario b {
-    display: block;
-    color: #fff;
-    font-size: 0.95rem;
-}
-
-.rail .usuario a {
-    color: #c4d6e0;
-    display: inline-block;
-    margin-top: 8px;
-}
-
-/* ── Columna principal + franja de contexto ── */
-.principal {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: auto;
-}
-
+/* ── Franja de contexto bajo la topbar ── */
 .contexto {
     display: flex;
     align-items: center;
@@ -164,6 +68,18 @@
     display: flex;
     gap: 0;
     flex: 1;
+    min-height: 0;
+}
+
+/* ── Vista del mapa en el shell nuevo ──
+   La clase la agrega ui_head() con la opción 'clase' => 'vista-mapa':
+   sin padding y en cadena flex, para que el plano + cajón repartan
+   todo el alto que queda debajo de la topbar. */
+.contenido-vista.vista-mapa {
+    padding: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     min-height: 0;
 }
 
@@ -602,12 +518,7 @@ svg .seg-sin_eval  { fill: #d9d9d9; stroke: #4a5a66; stroke-width: 0.8; }
     .tablero { grid-template-columns: repeat(2, minmax(240px, 1fr)); }
 }
 
-@media (max-width: 900px) {
-    .app { flex-direction: column; }
-    .rail { width: auto; flex-direction: row; align-items: center; padding: 8px 12px; gap: 14px; overflow: auto; }
-    .rail .marca { margin: 0; }
-    .rail nav { flex-direction: row; }
-    .rail .usuario { display: none; }
+@media (max-width: 720px) {
     .sala { flex-direction: column; }
     .cajon { width: auto; border-left: 0; border-top: 1px solid var(--color-borde); }
     /* En el tablero el técnico necesita ver TODAS las columnas:
@@ -615,4 +526,7 @@ svg .seg-sin_eval  { fill: #d9d9d9; stroke: #4a5a66; stroke-width: 0.8; }
     .tablero { grid-template-columns: 1fr; }
     .contenido-vista { padding: 16px 16px 32px; }
     .contexto { padding: 12px 16px; }
+    /* El plano puede ser más ancho que la pantalla: scroll horizontal
+       dentro del contenedor en vez de achatar el SVG. */
+    .plano { overflow-x: auto; }
 }

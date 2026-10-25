@@ -3,9 +3,10 @@
    css/estilos.css — Estilos globales del sistema
    ============================================================
    Consume las variables de theme.css (fuente única de la paleta).
-   Mantiene todas las clases históricas (.caja, .barra-superior,
-   .mensaje-ok/.mensaje-error, tablas, .menu-acciones) para no
-   romper ninguna vista existente; el rediseño es solo visual.
+   Mantiene las clases históricas (.caja, .mensaje-ok/.mensaje-error,
+   tablas, .menu-acciones) para no romper ninguna vista existente.
+   La barra superior histórica (.barra-superior) fue reemplazada por
+   la topbar del shell (css/shell.css, includes/ui.php).
 */
 
 /* ── Base ── */
@@ -205,72 +206,7 @@ td a:hover {
     text-decoration: underline;
 }
 
-/* ── Barra superior ── */
-.barra-superior {
-    background-color: var(--color-primario);
-    color: #ffffff;
-    padding: 12px 20px;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 4px;
-    box-shadow: var(--sombra);
-}
-
-/* Links de la barra: sin subrayado, hover con subrayado turquesa.
-   La negrita de usuario/rol la pone el markup nuevo (clases
-   .barra-usuario / .barra-rol) sin tocar los <a> históricos. */
-.barra-superior a {
-    color: #ffffff;
-    margin-left: 18px;
-    text-decoration: none;
-    font-weight: 500;
-    opacity: 0.88;
-    padding: 4px 2px;
-    border-bottom: 2px solid transparent;
-    transition: opacity 0.15s ease, border-color 0.15s ease;
-}
-
-.barra-superior a:hover {
-    opacity: 1;
-    border-bottom-color: var(--color-acento);
-}
-
-/* ── Marca en la barra (logo + nombre del sistema) ── */
-.barra-marca {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    margin-right: 12px;
-}
-
-.barra-marca img {
-    height: 20px;
-    width: auto;
-    display: block;
-    /* Pastilla blanca: "Access" es azul marino, igual que el fondo de la barra
-       (misma solución que .rail .tile). */
-    background-color: #fff;
-    padding: 5px 9px;
-    border-radius: 6px;
-}
-
-/* ── Nombre y rol del usuario en la barra ──
-   El nombre va en <strong>; el rol queda en peso normal para
-   jerarquizar (nombre destacado, rol secundario). */
-.barra-usuario {
-    margin-right: auto;   /* empuja los links hacia la derecha */
-    opacity: 0.95;
-}
-
-.barra-usuario strong {
-    font-weight: 700;
-}
-
-/* ── Enlaces sueltos fuera de la barra (ej: "Limpiar filtros") ── */
+/* ── Enlaces sueltos dentro de formularios (ej: "Limpiar filtros") ── */
 form a {
     color: var(--color-acento-texto);
 }
@@ -283,7 +219,7 @@ hr {
 }
 
 /* ── Responsive: pantallas chicas ── */
-@media (max-width: 640px) {
+@media (max-width: 720px) {
     body {
         padding: 10px;
     }
@@ -293,14 +229,5 @@ hr {
         padding: 18px;
         max-width: 100%;
         overflow-x: auto;   /* tablas anchas scrollean dentro de la caja */
-    }
-
-    .barra-superior {
-        padding: 10px 12px;
-    }
-
-    .barra-superior a {
-        margin-left: 0;
-        margin-right: 14px;
     }
 }

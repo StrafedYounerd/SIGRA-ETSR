@@ -8,6 +8,7 @@
 
 require '../../includes/auth.php';
 require '../../config/db.php';
+require '../../includes/ui.php';
 
 requerirRol(['admin']);
 
@@ -255,31 +256,12 @@ $lista_usuarios = $conexion->query(
     "SELECT id_usuario, nombre, usuario, rol, activo FROM usuarios ORDER BY nombre ASC"
 );
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
-    <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
-    <title>SIGRA-ETSR · Gestionar usuarios</title>
-    <link rel="stylesheet" href="/css/theme.css">
-    <link rel="stylesheet" href="/css/estilos.css?v=5">
-</head>
-<body>
-
-    <div class="barra-superior">
-        <span class="barra-marca">
-            <img src="/img/logo-accessnet.png" alt="Logo de AccessNet">
-            SIGRA-ETSR
-        </span>
-        <span class="barra-usuario">
-            <strong><?php echo htmlspecialchars($_SESSION['nombre']); ?></strong> · Administrador
-        </span>
-        <a href="dashboard.php">Volver al panel</a>
-        <a href="../logout.php">Cerrar sesión</a>
-    </div>
+<?php
+ui_head([
+    'titulo' => 'Usuarios',
+    'activo' => 'usuarios',
+]);
+?>
 
     <div class="caja caja-ancho-700">
         <h1>Gestionar usuarios</h1>
@@ -393,5 +375,4 @@ $lista_usuarios = $conexion->query(
         </form>
     </div>
 
-</body>
-</html>
+<?php ui_foot(); ?>

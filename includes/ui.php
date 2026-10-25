@@ -1,7 +1,7 @@
 <?php
 // ============================================================
 // SIGRA-ETSR · Componente B
-// includes/ui.php — Estructura común del app: rail lateral + franja de contexto
+// includes/ui.php — Shell común: topbar (escritorio) + tabbar (móvil)
 // ============================================================
 // Partial de PRESENTACIÓN que llama cada vista interna. Solo LEE
 // variables ya existentes ($_SESSION['nombre'], ['rol'], etc.);
@@ -18,9 +18,14 @@
 //   ]);
 //   ... contenido propio de la vista ...
 //   ui_foot();
+//
+// Navegación: en escritorio es la fila de pestañas de la topbar;
+// en pantallas de hasta 720px (css/shell.css) la misma lista pasa
+// a una barra inferior fija (.tabbar). "Cerrar sesión" vive dentro
+// del menú de usuario en ambos tamaños.
 
 /**
- * Imprime <!DOCTYPE> ... apertura del app (rail + principal/contexto).
+ * Imprime <!DOCTYPE> ... topbar + tabbar + apertura del contenido.
  * $datos se recibe como array de strings HTML listas para imprimir.
  */
 function ui_head($opciones) {
@@ -28,6 +33,9 @@ function ui_head($opciones) {
     $activo       = $opciones['activo'] ?? '';
     $datos        = $opciones['datos'] ?? [];
     $vivo         = $opciones['vivo'] ?? false;
+    // Clase extra para .contenido-vista (p. ej. 'vista-mapa' en el plano
+    // de sala, que necesita ocupar todo el alto sin padding).
+    $clase_vista  = $opciones['clase'] ?? '';
 
     $nombre = htmlspecialchars($_SESSION['nombre'] ?? '');
     $rol    = $_SESSION['rol'] ?? '';
@@ -56,52 +64,71 @@ function ui_head($opciones) {
     $rol_config = $navegacion[$rol] ?? [];
 
     $roles_texto = ['docente' => 'Docente', 'tecnico' => 'Técnico', 'admin' => 'Administrador'];
-    $rol_texto = $roles_texto[$rol] ?? ucfirst($rol);
+    $rol_texto   = $roles_texto[$rol] ?? ucfirst($rol);
 
-    // ── Links del usuario (los mismos destinos que las barras actuales) ──
-    $link_volver = '';
-    if (isset($_SERVER['HTTP_REFERER'])) {
-        $link_volver = '<a href="javascript:history.back()">Volver atrás</a> ';
-    }
+    // Iniciales para el avatar (primera letra del nombre + del apellido si hay).
+    $partes_nombre = array_values(array_filter(explode(' ', trim($_SESSION['nombre'] ?? '')), 'strlen'));
+    $iniciales = mb_strtoupper(mb_substr($partes_nombre[0] ?? '?', 0, 1)
+        . (isset($partes_nombre[1]) ? mb_substr($partes_nombre[1], 0, 1) : ''));
+
+    // Página actual (para marcar la pestaña activa). Con REQUEST_URI
+    // cubre también las acciones ?accion=... del admin, igual que el
+    // array de $extras de abajo.
+    $ruta_actual = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
     <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
     <title>SIGRA-ETSR · <?php echo htmlspecialchars($titulo_vista); ?></title>
-    <link rel="stylesheet" href="/css/theme.css">
-    <link rel="stylesheet" href="/css/estilos.css?v=5">
-    <link rel="stylesheet" href="/css/mapa.css?v=7"><!-- acá viven .app/.rail/.contexto -->
+    <link rel="stylesheet" href="/css/theme.css?v=6">
+    <link rel="stylesheet" href="/css/estilos.css?v=7">
+    <link rel="stylesheet" href="/css/mapa.css?v=9">
+    <link rel="stylesheet" href="/css/shell.css?v=2"><!-- topbar + tabbar + usermenu + roomgrid -->
 </head>
 <body class="cuerpo-app">
 
-<div class="app">
+<header class="topbar">
+    <a class="brand" href="/">
+        <img src="/img/logo-accessnet.png" alt="Logo de AccessNet">
+        <span>SIGRA-ETSR</span>
+    </a>
 
-    <aside class="rail">
-        <div class="marca">
-            <span class="tile"><img src="/img/logo-accessnet.png" alt="AccessNet"></span>
-            <span class="sis">SIGRA-ETSR</span>
-        </div>
-        <nav aria-label="Principal">
+    <nav class="topnav" aria-label="Principal">
 <?php foreach ($rol_config as $clave => $item): list($texto, $href, $extras) = [$item[0], $item[1], $item[2] ?? []];
-                $es_activa = ($clave === $activo)
-                    || in_array(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), $extras, true);
+            $es_activa = ($clave === $activo)
+                || in_array($ruta_actual, $extras, true);
 ?>
-            <a href="<?php echo $href; ?>"<?php echo $es_activa ? ' aria-current="page"' : ''; ?>><?php echo $texto; ?></a>
+        <a href="<?php echo $href; ?>"<?php echo $es_activa ? ' class="is-active" aria-current="page"' : ''; ?>><?php echo $texto; ?></a>
 <?php endforeach; ?>
-        </nav>
-        <div class="usuario">
-            <b><?php echo $nombre; ?></b><?php echo $rol_texto; ?><br>
-            <a href="/logout.php">Cerrar sesión</a>
-            <?php echo $link_volver; ?>
-        </div>
-    </aside>
+    </nav>
 
-    <div class="principal">
+    <div class="usermenu">
+        <button class="usermenu__btn" type="button" aria-expanded="false" aria-controls="um-panel">
+            <span class="avatar" aria-hidden="true"><?php echo htmlspecialchars($iniciales); ?></span>
+            <span class="usermenu__who"><strong><?php echo $nombre; ?></strong><small><?php echo $rol_texto; ?></small></span>
+        </button>
+        <div class="usermenu__panel" id="um-panel" hidden>
+            <div class="usermenu__head"><strong><?php echo $nombre; ?></strong><small><?php echo $rol_texto; ?></small></div>
+            <a href="/logout.php">Cerrar sesión</a>
+        </div>
+    </div>
+</header>
+
+<nav class="tabbar" aria-label="Principal (móvil)">
+<?php foreach ($rol_config as $clave => $item): list($texto, $href, $extras) = [$item[0], $item[1], $item[2] ?? []];
+        $es_activa = ($clave === $activo)
+            || in_array($ruta_actual, $extras, true);
+?>
+    <a href="<?php echo $href; ?>"<?php echo $es_activa ? ' class="is-active"' : ''; ?>><?php echo $texto; ?></a>
+<?php endforeach; ?>
+</nav>
+
+<main class="contenido-app">
         <header class="contexto">
             <h1><?php echo htmlspecialchars($titulo_vista); ?></h1>
 <?php foreach ($datos as $dato): ?>
@@ -111,7 +138,7 @@ function ui_head($opciones) {
             <span class="vivo" aria-live="off">Actualizado hace <b id="hace">0</b> s</span>
 <?php endif; ?>
         </header>
-        <div class="contenido-vista">
+        <div class="contenido-vista<?php echo $clase_vista !== '' ? ' ' . htmlspecialchars($clase_vista) : ''; ?>">
 
 <?php
 }
@@ -120,9 +147,9 @@ function ui_head($opciones) {
 function ui_foot() {
 ?>
         </div>
-    </div>
-</div>
+</main>
 
+<script src="/js/shell.js"></script>
 </body>
 </html>
 <?php

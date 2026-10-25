@@ -91,46 +91,14 @@ if ($consulta_fotos) {
     }
     $fotos_disponibles = true;
 }
+ui_head([
+    'titulo' => $_SESSION['nombre_sala'],
+    'activo' => 'mapa',
+    'datos'  => ['Grupo <b>' . htmlspecialchars($_SESSION['grupo']) . '</b>'],
+    'vivo'   => true,
+    'clase'  => 'vista-mapa', // el plano ocupa todo el alto disponible (mapa.css)
+]);
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
-    <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
-    <title>SIGRA-ETSR · Mapa de sala</title>
-    <link rel="stylesheet" href="/css/theme.css">
-    <link rel="stylesheet" href="/css/estilos.css?v=5">
-    <link rel="stylesheet" href="/css/mapa.css?v=7">
-</head>
-<body class="cuerpo-app">
-
-<div class="app">
-
-    <aside class="rail">
-        <div class="marca">
-            <span class="tile"><img src="/img/logo-accessnet.png" alt="AccessNet"></span>
-            <span class="sis">SIGRA-ETSR</span>
-        </div>
-        <nav aria-label="Principal">
-            <a href="/docente/mapa-sala.php" aria-current="page">Mi sala</a>
-            <a href="/docente/seleccionar-sala.php">Cambiar sala</a>
-        </nav>
-        <div class="usuario">
-            <b><?php echo htmlspecialchars($_SESSION['nombre']); ?></b>Docente<br>
-            <a href="/logout.php">Cerrar sesión</a>
-        </div>
-    </aside>
-
-    <div class="principal">
-        <header class="contexto">
-            <h1><?php echo htmlspecialchars($_SESSION['nombre_sala']); ?></h1>
-            <span class="dato">Grupo <b><?php echo htmlspecialchars($_SESSION['grupo']); ?></b></span>
-            <span class="vivo" aria-live="off">Actualizado hace <b id="hace">0</b> s</span>
-        </header>
-
         <div class="sala">
             <div class="plano">
                 <!-- Leyenda RNF01: verde = funcional, rojo = con falla, gris = no evaluada.
@@ -152,9 +120,6 @@ if ($consulta_fotos) {
                  resumen de reportes, el detalle del equipo o el formulario. -->
             <aside class="cajon" id="cajon" aria-live="polite"></aside>
         </div>
-    </div>
-
-</div>
 
 <!-- Mensaje flotante para confirmaciones -->
 <div class="toast" id="toast" role="status"></div>
@@ -186,5 +151,5 @@ if ($consulta_fotos) {
     para forzar la descarga de la versión nueva.
 -->
 <script src="/js/mapa.js?v=5"></script>
-</body>
-</html>
+
+<?php ui_foot(); ?>

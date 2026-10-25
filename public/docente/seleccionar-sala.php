@@ -7,6 +7,7 @@
 
 require '../../includes/auth.php';
 require '../../config/db.php';
+require '../../includes/ui.php';
 
 // Verificamos sesión y que el rol sea docente. requerirRol() ya hace
 // internamente la llamada a verificarSesion(), no hace falta repetirla.
@@ -64,56 +65,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
-    <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
-    <title>SIGRA-ETSR · Seleccionar sala</title>
-    <link rel="stylesheet" href="/css/theme.css">
-    <link rel="stylesheet" href="/css/estilos.css?v=5">
-</head>
-<body>
+<?php
+ui_head([
+    'titulo' => 'Cambiar sala',
+    'activo' => 'sala',
+]);
+?>
 
-    <div class="barra-superior">
-        <span class="barra-marca">
-            <img src="/img/logo-accessnet.png" alt="Logo de AccessNet">
-            SIGRA-ETSR
-        </span>
-        <span class="barra-usuario">
-            <strong><?php echo htmlspecialchars($_SESSION['nombre']); ?></strong> · Docente
-        </span>
-        <a href="javascript:history.back()">Volver atrás</a>
-        <a href="../logout.php">Cerrar sesión</a>
-    </div>
-
-    <div class="caja">
-        <h1>Seleccionar sala</h1>
+    <div class="caja caja-ancho-700">
+        <h1>Elegí tu sala</h1>
+        <p class="nota-sala">Tocá la sala donde estás dando clase y escribí el grupo.</p>
 
         <?php if ($error !== ''): ?>
             <div class="mensaje-error"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
 
-        <form method="POST" action="seleccionar-sala.php">
-            <label for="id_sala">Sala</label>
-            <select id="id_sala" name="id_sala">
-                <option value="">-- Elegí una sala --</option>
-                <?php while ($fila = $resultado_salas->fetch_assoc()): ?>
-                    <option value="<?php echo $fila['id_sala']; ?>">
-                        <?php echo htmlspecialchars($fila['nombre_sala']); ?>
-                    </option>
-                <?php endwhile; ?>
-            </select>
+        <?php if ($resultado_salas->num_rows === 0): ?>
+            <p>No hay salas activas configuradas. Avisale al técnico.</p>
+        <?php else: ?>
 
-            <label for="grupo">Grupo</label>
-            <input type="text" id="grupo" name="grupo" placeholder="Ej: 3 DH">
+        <!-- Mismos campos de siempre (id_sala + grupo): el backend no
+             distingue si el valor vino de un <select> o de estos radios. -->
+        <form method="POST" action="seleccionar-sala.php" class="form-elegir-sala">
+            <fieldset class="roomgrid">
+                <legend class="sr-only">Sala</legend>
+                <?php while ($fila = $resultado_salas->fetch_assoc()): ?>
+                <label class="room">
+                    <input class="room__input" type="radio" name="id_sala"
+                           value="<?php echo $fila['id_sala']; ?>" required>
+                    <span class="room__nombre"><?php echo htmlspecialchars($fila['nombre_sala']); ?></span>
+                    <span class="room__check" aria-hidden="true"></span>
+                </label>
+                <?php endwhile; ?>
+            </fieldset>
+
+            <label class="campo-grupo" for="grupo">Grupo</label>
+            <input type="text" id="grupo" name="grupo" placeholder="Ej: 3 DH" required>
 
             <button type="submit">Continuar</button>
         </form>
+
+        <?php endif; ?>
     </div>
 
-</body>
-</html>
+<?php ui_foot(); ?>

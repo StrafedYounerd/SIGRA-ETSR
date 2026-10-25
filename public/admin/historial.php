@@ -8,6 +8,7 @@
 
 require '../../includes/auth.php';
 require '../../config/db.php';
+require '../../includes/ui.php';
 
 requerirRol(['admin']); // Solo administradores pueden acceder
 
@@ -90,31 +91,12 @@ $resultado = $consulta->get_result();
 // ── Traer la lista de salas para el desplegable del filtro ──
 $salas_disponibles = $conexion->query("SELECT id_sala, nombre_sala FROM salas WHERE activa = 1");
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
-    <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
-    <title>SIGRA-ETSR · Historial completo (Administrador)</title>
-    <link rel="stylesheet" href="/css/theme.css">
-    <link rel="stylesheet" href="/css/estilos.css?v=5">
-</head>
-<body>
-
-    <div class="barra-superior">
-        <span class="barra-marca">
-            <img src="/img/logo-accessnet.png" alt="Logo de AccessNet">
-            SIGRA-ETSR
-        </span>
-        <span class="barra-usuario">
-            <strong><?php echo htmlspecialchars($_SESSION['nombre']); ?></strong> · Administrador
-        </span>
-        <a href="dashboard.php">Volver al panel</a>
-        <a href="../logout.php">Cerrar sesión</a>
-    </div>
+<?php
+ui_head([
+    'titulo' => 'Historial completo',
+    'activo' => 'historial',
+]);
+?>
 
     <div class="caja caja-ancho-900">
         <h1>Historial completo de tickets</h1>
@@ -190,5 +172,4 @@ $salas_disponibles = $conexion->query("SELECT id_sala, nombre_sala FROM salas WH
         <?php endif; ?>
     </div>
 
-</body>
-</html>
+<?php ui_foot(); ?>

@@ -13,6 +13,7 @@
 
 require '../../includes/auth.php';
 require '../../config/db.php';
+require '../../includes/ui.php';
 
 requerirRol(['tecnico', 'admin']);
 
@@ -90,46 +91,14 @@ function antiguedad_ticket($fecha) {
     return 'hace ' . $d . ' días';
 }
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
-    <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
-    <title>SIGRA-ETSR · Panel del técnico</title>
-    <link rel="stylesheet" href="/css/theme.css">
-    <link rel="stylesheet" href="/css/estilos.css?v=5">
-    <link rel="stylesheet" href="/css/mapa.css?v=7">
-</head>
-<body class="cuerpo-app">
-
-<div class="app">
-
-    <aside class="rail">
-        <div class="marca">
-            <span class="tile"><img src="/img/logo-accessnet.png" alt="Logo de AccessNet"></span>
-            <span class="sis">SIGRA-ETSR</span>
-        </div>
-        <nav aria-label="Principal">
-            <a href="/tecnico/panel.php" aria-current="page">Tickets activos</a>
-            <a href="/tecnico/historial.php">Historial completo</a>
-        </nav>
-        <div class="usuario">
-            <b><?php echo htmlspecialchars($_SESSION['nombre']); ?></b>Técnico<br>
-            <a href="/logout.php">Cerrar sesión</a>
-        </div>
-    </aside>
-
-    <div class="principal">
-        <header class="contexto">
-            <h1>Tickets activos</h1>
-            <span class="dato"><b><?php echo count($tickets); ?></b> sin resolver</span>
-            <span class="vivo" aria-live="off">Actualizado hace <b id="hace">0</b> s</span>
-        </header>
-
-        <div class="contenido-vista">
+<?php
+ui_head([
+    'titulo' => 'Tickets activos',
+    'activo' => 'panel',
+    'datos'  => ['<b>' . count($tickets) . '</b> sin resolver'],
+    'vivo'   => true,
+]);
+?>
 
         <?php if ($mensaje_texto !== ''): ?>
             <div class="mensaje-<?php echo $mensaje_tipo === 'ok' ? 'ok' : 'error'; ?>">
@@ -243,8 +212,6 @@ function antiguedad_ticket($fecha) {
         </div>
         <?php endif; ?>
         </div>
-    </div>
-</div>
 
 <script>
 // ── Filtro por sala (solo frontend: oculta/muestra tarjetas) ──
@@ -271,5 +238,5 @@ setInterval(function () {
 }, 1000);
 </script>
 
-</body>
-</html>
+<?php ui_foot(); ?>
+
