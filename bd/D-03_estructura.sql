@@ -1,18 +1,45 @@
 -- ============================================================
 -- SIGRA-ETSR · Componente B (Sistema Web)
--- Script de creación de base de datos y datos de prueba
+-- Script de creación de base de datos y datos de ejemplo
 -- D-03 · Fase 4 - Codificación (Green Path)
 -- ============================================================
+--
+-- ORDEN DE INSTALACIÓN (ver bd/README.md):
+--   1) este archivo            → usuarios, salas, pcs, tickets, ...
+--   2) bd/migracion_fotos.sql  → tabla fotos
+--   3) bd/migracion_fotos_sala.sql → fotos.id_sala + índices
+--
+-- La estructura de este script refleja EXACTAMENTE la que tiene la
+-- base del servidor (obtenida con mysqldump --no-data): mismos tipos,
+-- mismos ENUM, mismos índices y mismas claves foráneas. No se agregan
+-- columnas UNIQUE ni migraciones que el servidor no tenga.
+--
+-- El nombre de la base es parametrizable: por defecto crea/usar
+-- 'sigra_etsr'. Para instalar en otra base (por ejemplo una de
+-- pruebas) hay que definir la variable @sigra_db ANTES de correr el
+-- script, por ejemplo:
+--   mysql -u root -p --init-command="SET @sigra_db='sigra_prueba'" < este.sql
+-- Si @sigra_db no está definida, se respeta la base ya seleccionada
+-- (mysql -D mi_base < este.sql) y, si tampoco hay, se usa 'sigra_etsr'.
 
--- Crea la base de datos si no existe, y la configura con codificación
--- UTF-8 para soportar tildes y caracteres especiales del español sin errores.
-CREATE DATABASE IF NOT EXISTS sigra_etsr
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_spanish_ci;
+-- ── Crear la base si no existe ──
+-- utf8mb4_general_ci es la collation real del servidor (no spanish_ci).
+SET @sigra_db = IFNULL(@sigra_db, IFNULL(DATABASE(), 'sigra_etsr'));
 
--- Selecciona la base de datos recién creada para que todas las
--- sentencias siguientes se ejecuten dentro de ella.
-USE sigra_etsr;
+SET @sql = CONCAT(
+    'CREATE DATABASE IF NOT EXISTS `', @sigra_db, '` ',
+    'CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci'
+);
+PREPARE stmt_crear_db FROM @sql;
+EXECUTE stmt_crear_db;
+DEALLOCATE PREPARE stmt_crear_db;
+
+-- Selecciona la base recién creada para que todas las sentencias
+-- siguientes se ejecuten dentro de ella.
+SET @sql = CONCAT('USE `', @sigra_db, '`');
+PREPARE stmt_usar_db FROM @sql;
+EXECUTE stmt_usar_db;
+DEALLOCATE PREPARE stmt_usar_db;
 
 
 -- ============================================================
@@ -28,7 +55,7 @@ CREATE TABLE usuarios (
   activo       TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (id_usuario),
   UNIQUE KEY uk_usuario (usuario)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Explicación línea por línea:
 -- id_usuario   INT AUTO_INCREMENT: clave primaria numérica que MySQL genera sola.
@@ -53,7 +80,7 @@ CREATE TABLE salas (
   descripcion  TEXT NULL,
   activa       TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (id_sala)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- descripcion TEXT NULL: campo opcional, puede quedar vacío sin romper nada.
 -- activa: permite "desactivar" una sala sin borrarla (útil si se da de baja
@@ -72,18 +99,19 @@ CREATE TABLE pcs (
   posicion       INT(11) NOT NULL,
   tipo_equipo    ENUM('PC', 'Switch', 'TV', 'Proyector') NOT NULL DEFAULT 'PC',
   estado_actual  ENUM('funcional', 'falla', 'sin_eval') NOT NULL DEFAULT 'sin_eval',
-  tipo_equipo    ENUM('PC', 'Switch', 'TV', 'Proyector') NOT NULL DEFAULT 'PC',
   PRIMARY KEY (id_pc),
   CONSTRAINT fk_pc_sala
     FOREIGN KEY (id_sala) REFERENCES salas(id_sala)
     ON DELETE RESTRICT
     ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- id_sala INT NOT NULL: toda PC tiene que pertenecer a una sala, sin excepción.
 -- etiqueta VARCHAR(20): el identificador visible, ej. "PC-210-01".
 -- fila / posicion: coordenadas lógicas para dibujar la PC en su lugar
 --   exacto dentro del mapa en forma de U (fila 1, 2 o 3 + su orden).
+-- tipo_equipo ENUM: PC, Switch, TV o Proyector. El switch y el TV usan
+--   fila = 0 y posicion = 0 (no forman parte de la U de PCs).
 -- estado_actual DEFAULT 'sin_eval': una PC recién cargada no tiene estado
 --   conocido todavía, hasta que se reporte una falla o se confirme que funciona.
 -- CONSTRAINT fk_pc_sala: define la clave foránea hacia salas.id_sala.
@@ -116,7 +144,7 @@ CREATE TABLE tickets (
     FOREIGN KEY (id_docente) REFERENCES usuarios(id_usuario)
     ON DELETE RESTRICT
     ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- detalle_texto TEXT NULL: solo se completa cuando tipo_falla es
 --   "Falta de software" u "Otro" (esa validación la hace el código PHP,
@@ -154,7 +182,7 @@ CREATE TABLE historial_tickets (
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
     ON DELETE RESTRICT
     ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- estado_anterior / estado_nuevo VARCHAR(30): se guardan como texto plano
 --   (no ENUM) porque acá es solo un registro histórico, no necesita
@@ -185,36 +213,36 @@ CREATE TABLE sesiones_docente (
     FOREIGN KEY (id_sala) REFERENCES salas(id_sala)
     ON DELETE RESTRICT
     ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- grupo VARCHAR(50): texto libre, ej. "3D TI", para identificar la clase.
--- Esta tabla no se usa todavía en el pseudocódigo de las 3 fases anteriores
--- (Login, Reportar falla, Actualizar ticket), pero queda lista en el MER
--- para cuando se implemente CU-02 (Seleccionar sala) con su registro completo.
+-- Esta tabla se usa en CU-02 (Seleccionar sala) para registrar la entrada
+-- del docente a la sala con su grupo.
 
 
 -- ============================================================
--- DATOS DE PRUEBA
--- Contraseñas hasheadas con SHA-256 (coincide con RNF-02 de la ESRE).
--- admin    -> contraseña real: admin123
--- soporte  -> contraseña real: soporte123
--- docente  -> contraseña real: docente123
+-- DATOS DE EJEMPLO
+-- ------------------------------------------------------------
+-- Son datos de INSTALACIÓN, no datos reales del servidor. Las
+-- contraseñas son de ejemplo y los hashes son SHA-256 (coincide con
+-- RNF-02 de la ESRE). Ver bd/README.md: hay que cambiarlas en la
+-- primera puesta en marcha.
 -- ============================================================
 
 INSERT INTO usuarios (nombre, usuario, contraseña, rol, activo) VALUES
-('Administrador del Sistema', 'admin',
- '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9',
+('Administrador de Ejemplo', 'admin',
+ '613d47a24381bc4fd9f5be42212419543876de81dc511b5b45a6991b1d7a920f',
  'admin', 1),
-('Soporte ETSR', 'soporte',
- '8f51a8428ee0230c0521b3279c574a774ae0064a902f6deecc396315eec96577',
+('Soporte de Ejemplo', 'soporte',
+ '49b147038c14b0e671c3d10ed438128aef2e0e294e2ae7f6aff4fef526a07f24',
  'tecnico', 1),
-('Docente de Prueba', 'docente',
- '9228105f4ea40ae4b70fde55ee2caf4495c1f188333c41ef566417ab04819f56',
+('Docente de Ejemplo', 'docente',
+ 'd30475b41abe8b136274b217f98c768e15980dee9130027c5fa39d64fc4d88d3',
  'docente', 1);
 
 -- Cada fila corresponde a un actor del sistema (RN: separación de roles).
--- Los hashes fueron generados con SHA-256 fuera de la base de datos
--- (en PHP esto se hace con hash('sha256', $contraseña) al crear el usuario).
+-- Los hashes son SHA-256 de las contraseñas de ejemplo documentadas en
+-- bd/README.md (en PHP: hash('sha256', $contraseña)).
 
 
 -- Carga la Sala 210, única sala piloto definida hasta el momento.
@@ -226,24 +254,30 @@ INSERT INTO salas (nombre_sala, descripcion, activa) VALUES
 -- Fila 2: 3 PCs (posiciones 1 a 3)
 -- Fila 3: 5 PCs (posiciones 1 a 5)
 -- Todas nacen en estado 'sin_eval' porque todavía no se evaluó su estado real.
+-- Las etiquetas PC-#### son las de los equipos de la sala piloto.
 
-INSERT INTO pcs (id_sala, etiqueta, fila, posicion, estado_actual) VALUES
-(1, 'PC-7296', 1, 1, 'sin_eval'),
-(1, 'PC-7288', 1, 2, 'sin_eval'),
-(1, 'PC-7291', 1, 3, 'sin_eval'),
-(1, 'PC-7283', 1, 4, 'sin_eval'),
-(1, 'PC-7286', 1, 5, 'sin_eval'),
-(1, 'PC-7287', 2, 1, 'sin_eval'),
-(1, 'PC-7292', 2, 2, 'sin_eval'),
-(1, 'PC-7284', 2, 3, 'sin_eval'),
-(1, 'PC-7290', 3, 1, 'sin_eval'),
-(1, 'PC-7282', 3, 2, 'sin_eval'),
-(1, 'PC-7285', 3, 3, 'sin_eval'),
-(1, 'PC-7289', 3, 4, 'sin_eval'),
-(1, 'PC-7293', 3, 5, 'sin_eval');
+INSERT INTO pcs (id_sala, etiqueta, fila, posicion, tipo_equipo, estado_actual) VALUES
+(1, 'PC-7296', 1, 1, 'PC', 'sin_eval'),
+(1, 'PC-7288', 1, 2, 'PC', 'sin_eval'),
+(1, 'PC-7291', 1, 3, 'PC', 'sin_eval'),
+(1, 'PC-7283', 1, 4, 'PC', 'sin_eval'),
+(1, 'PC-7286', 1, 5, 'PC', 'sin_eval'),
+(1, 'PC-7287', 2, 1, 'PC', 'sin_eval'),
+(1, 'PC-7292', 2, 2, 'PC', 'sin_eval'),
+(1, 'PC-7284', 2, 3, 'PC', 'sin_eval'),
+(1, 'PC-7290', 3, 1, 'PC', 'sin_eval'),
+(1, 'PC-7282', 3, 2, 'PC', 'sin_eval'),
+(1, 'PC-7285', 3, 3, 'PC', 'sin_eval'),
+(1, 'PC-7289', 3, 4, 'PC', 'sin_eval'),
+(1, 'PC-7293', 3, 5, 'PC', 'sin_eval'),
+(1, 'SW-Sala 210', 0, 0, 'Switch', 'sin_eval'),
+(1, 'TV-Sala 210', 0, 0, 'TV', 'sin_eval');
 
 -- Nota: id_sala = 1 asume que la Sala 210 fue la primera (y única) fila
 -- insertada en la tabla salas, por eso su AUTO_INCREMENT generó id_sala = 1.
+-- El switch y el TV de la sala se cargan con fila = 0 y posicion = 0
+-- (no son parte de la U de PCs); es el mismo criterio que usa
+-- public/admin/salas.php al crear una sala.
 
 -- ============================================================
 -- FIN DEL SCRIPT

@@ -6,9 +6,25 @@
 -- Esta columna asocia cada foto a su sala. Aditiva e idempotente.
 -- Las fotos de control de sala completa que ya existían (id_pc NULL) se atribuyen
 -- a la sala de la sesión del docente en ese momento (ver más abajo).
+--
+-- El script ya trae la columna id_sala en la tabla fotos; este archivo
+-- cubre las bases donde la tabla se creó antes de que existiera esa
+-- columna, y agrega el índice y la FK que le corresponden.
+
+-- Selecciona la base sobre la que correr la migración (mismo criterio
+-- que en migracion_fotos.sql: la base ya seleccionada, si la hay, gana).
+SET @sigra_db = IFNULL(@sigra_db, IFNULL(DATABASE(), 'sigra_etsr'));
+SET @sql = CONCAT('USE `', @sigra_db, '`');
+PREPARE stmt_usar_db FROM @sql;
+EXECUTE stmt_usar_db;
+DEALLOCATE PREPARE stmt_usar_db;
 
 ALTER TABLE fotos
   ADD COLUMN IF NOT EXISTS id_sala INT(11) NULL AFTER id_pc;
+
+-- Índice compuesto (id_sala, tipo, fecha_subida): es el que usa la
+-- consulta del cajón para traer las fotos de control de una sala.
+CREATE INDEX IF NOT EXISTS idx_fotos_sala ON fotos (id_sala, tipo, fecha_subida);
 
 ALTER TABLE fotos
   ADD CONSTRAINT fk_foto_sala
@@ -27,5 +43,3 @@ UPDATE fotos f
                      WHERE s.id_usuario = f.id_docente AND s.fecha_entrada <= f.fecha_subida
                      ORDER BY s.fecha_entrada DESC LIMIT 1)
  WHERE f.id_sala IS NULL AND f.id_pc IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_fotos_sala ON fotos (id_sala, tipo, fecha_subida);
