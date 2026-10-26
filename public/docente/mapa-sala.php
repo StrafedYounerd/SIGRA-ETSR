@@ -150,6 +150,6 @@ ui_head([
     cambios no se reflejan en el navegador, subí este número (v=5, v=6...)
     para forzar la descarga de la versión nueva.
 -->
-<script src="/js/mapa.js?v=5"></script>
+<script src="/js/mapa.js?v=6"></script>
 
 <?php ui_foot(); ?>

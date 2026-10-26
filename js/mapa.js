@@ -79,37 +79,135 @@ function antiguedad(fecha) {
 // PLANO SVG
 // ============================================================
 
-// Asigna coordenadas del plano según fila/posicion reales de la DB:
-//   fila 2 = fila del fondo (3 PCs centradas, monitor hacia atrás)
-//   fila 3 = pata izquierda   fila 1 = pata derecha
-//   Switch y TV/Proyector van al frente: TV a la derecha del pizarrón,
-//   Switch junto a la puerta (abajo a la derecha).
+// Coordenadas del plano según fila/posicion reales de la DB.
+// Orientación REAL de cada fila (la posición 1 es la primera que ve el
+// docente al entrar por la puerta, abajo a la derecha):
+//   fila 1 (pata derecha):   posición 1 ABAJO, sube hacia el fondo
+//   fila 2 (fila del fondo): posición 1 a la DERECHA
+//   fila 3 (pata izquierda): posición 1 ARRIBA, baja hacia la puerta
+// Switch y TV/Proyector van al frente: TV a la derecha del pizarrón,
+// Switch junto a la puerta (abajo a la derecha).
+const ORIENTACION = { 1: "asc", 2: "der", 3: "desc" };
+
+// Tope técnico de posiciones por fila (único cap del plano). Posiciones
+// mayores se recortan a este valor; el editor de admin debe respetarlo.
+const MAX_POR_FILA = 20;
+
+// Devuelve el índice de "ranura" que ocupa la posición i+1 de una fila
+// (las ranuras se cuentan de arriba hacia abajo, o de izquierda a derecha).
+//   "asc":  la posición 1 arranca ABAJO y la lista sube   (eje vertical)
+//   "desc": la posición 1 arranca ARRIBA y la lista baja  (eje vertical)
+//   "der":  la posición 1 arranca a la DERECHA y va a la izquierda
+//   "izq":  la posición 1 arranca a la IZQUIERDA y va a la derecha
+function indiceEnFila(orient, i, total) {
+    const invertida = (orient === "asc" || orient === "der");
+    return invertida ? total - 1 - i : i;
+}
+
+// Calcula el layout completo del plano a partir de los totales por fila
+// {1: n, 2: n, 3: n} (en realidad: la MAYOR posición usada de cada fila,
+// así una posición saltada queda como hueco libre, igual que hoy).
+// Es una función pura: recibe totales, devuelve coordenadas.
+// Con los datos actuales (≤5 por columna, ≤3 al fondo) el conjunto de
+// coordenadas es IDÉNTICO al histórico — solo cambia el sentido de
+// numeración de las filas 1 y 2. Más equipos que eso hacen crecer el
+// viewBox: más alto para las columnas, más ancho para la fila del fondo,
+// sin solapes ni cortes.
+function calcularLayout(totalesPorFila) {
+    const n = [1, 2, 3].map(f => Math.min(MAX_POR_FILA, totalesPorFila[f] || 0));
+    const X_IZQ = 36, X_DER = 740;          // columnas pegadas a las paredes
+    const Y_COL = 130, SEP_Y = 78;          // primera mesa y separación vertical
+    const Y_TOP = 36;                        // fila del fondo
+    const MESA_LADO_W = 124, MESA_LADO_H = 66;
+    const MESA_TOP_W = 108, MESA_TOP_H = 70;
+    const SEP_H = 122;      // separación histórica de la fila del fondo
+    const SEP_H_MIN = 112;  // menos que esto: el plano se ensancha
+    const FILA2_BASE = 274; // anclaje histórico de la fila 2 (n ≤ 3)
+
+    // Columnas: el alto del plano crece con la fila más larga, dejando
+    // 32px de aire entre la última mesa y el frente (pared del medio).
+    const nLargo = Math.max(n[0], n[2]);
+    const fondoCol = nLargo ? Y_COL + (nLargo - 1) * SEP_Y + MESA_LADO_H : 0;
+    const dy = Math.max(0, fondoCol + 32 - 540);
+
+    // Fila del fondo: hasta 3 usa el anclaje histórico (274 + i·122),
+    // que mantiene el conjunto de coordenadas de las salas actuales.
+    // Desde 4 se centra en el hueco de la U; si no entra con la
+    // separación mínima, la pared derecha se corre (W crece).
+    let W = 900, sep2 = SEP_H, x0 = FILA2_BASE;
+    if (n[1] >= 4) {
+        const huecoBase = X_DER - (X_IZQ + MESA_LADO_W);   // interior de la U
+        sep2 = Math.min(SEP_H, (huecoBase - MESA_TOP_W) / (n[1] - 1));
+        if (sep2 < SEP_H_MIN) {
+            sep2 = SEP_H_MIN;
+            W += Math.ceil(MESA_TOP_W + (n[1] - 1) * sep2 + 80 - huecoBase);
+        }
+    }
+    const xDer = X_DER + (W - 900);   // pared derecha corrida, si creció
+    if (n[1] >= 4) {
+        const hueco = xDer - (X_IZQ + MESA_LADO_W);
+        const bloque = MESA_TOP_W + (n[1] - 1) * sep2;
+        x0 = (X_IZQ + MESA_LADO_W + xDer - bloque) / 2;
+    }
+
+    // Coordenadas por posición (índice 0 = posición 1). El sentido de
+    // cada fila lo fija ORIENTACION:
+    //   fila 1 "asc":  pos 1 abajo, la lista sube
+    //   fila 2 "der":  pos 1 a la derecha, la lista va hacia la izquierda
+    //   fila 3 "desc": pos 1 arriba, la lista baja
+    const posiciones = {};
+    [1, 2, 3].forEach(f => {
+        const total = n[f - 1];
+        const orient = ORIENTACION[f];
+        posiciones[f] = Array.from({ length: total }, (_, i) => {
+            const k = indiceEnFila(orient, i, total);
+            if (f === 2) return { x: x0 + k * sep2, y: Y_TOP, o: "top" };
+            if (f === 3) return { x: X_IZQ, y: Y_COL + k * SEP_Y, o: "izq" };
+            return { x: xDer, y: Y_COL + k * SEP_Y, o: "der" };
+        });
+    });
+    return { W, H: 620 + dy, xDer, dy, posiciones };
+}
+
+// Asigna a cada equipo sus coordenadas con calcularLayout y devuelve el
+// layout para que dibujarPlano ajuste el viewBox. El Switch y la TV
+// siguen fijos en el frente y se corren con las paredes si el plano
+// crece (switch junto a la puerta derecha, TV a la derecha del pizarrón).
 function asignarCoordenadas(equipos) {
-    const Y_TOP = 36, X_IZQ = 36, X_DER = 740;
-    const ys = [130, 208, 286, 364, 442];
-    let iTop = 0, iIzq = 0, iDer = 0;
+    // fila normalizada (cualquier fila rara va a la columna derecha) y
+    // posición recortada a [1, MAX_POR_FILA].
+    const norm = e => ({
+        f: Number(e.fila) === 2 || Number(e.fila) === 3 ? Number(e.fila) : 1,
+        p: Math.min(MAX_POR_FILA, Math.max(1, Number(e.posicion) || 1))
+    });
+
+    // Primera pasada: la MAYOR posición por fila define el tamaño.
+    const maxPos = {};
+    equipos.forEach(e => {
+        if (e.tipo_equipo !== "PC") return;
+        const { f, p } = norm(e);
+        maxPos[f] = Math.max(maxPos[f] || 0, p);
+    });
+
+    const L = calcularLayout(maxPos);
     let tvAsignada = false, switchAsignado = false;
 
     equipos.forEach(e => {
         if (e.tipo_equipo === "PC") {
-            const idx = Number(e.posicion) - 1;
-            if (Number(e.fila) === 2) {
-                // centradas: 3 posiciones con la misma separación que el mockup
-                e.x = 274 + idx * 122; e.y = Y_TOP; e.o = "top";
-            } else if (Number(e.fila) === 3) {
-                e.x = X_IZQ; e.y = ys[Math.min(idx, ys.length - 1)]; e.o = "izq";
-            } else {
-                e.x = X_DER; e.y = ys[Math.min(idx, ys.length - 1)]; e.o = "der";
-            }
+            const { f, p } = norm(e);
+            const c = L.posiciones[f][p - 1];
+            if (c) { e.x = c.x; e.y = c.y; e.o = c.o; }
         } else if (e.tipo_equipo === "Switch") {
-            e.x = 742; e.y = 540; e.w = 118; e.h = 46; e.o = "obj";
+            e.x = 742 + (L.W - 900); e.y = 540 + L.dy; e.w = 118; e.h = 46; e.o = "obj";
             switchAsignado = true;
         } else { // TV / Proyector
-            e.x = 430; e.y = 552; e.w = 128; e.h = 34; e.o = "obj";
+            e.x = 430; e.y = 552 + L.dy; e.w = 128; e.h = 34; e.o = "obj";
             tvAsignada = true;
         }
     });
-    return { tvAsignada, switchAsignado };
+    L.tvAsignada = tvAsignada;
+    L.switchAsignado = switchAsignado;
+    return L;
 }
 
 // Dibuja una mesa con monitor orientado a la pared y textos.
@@ -158,41 +256,46 @@ function dibujarPlano() {
     const svg = $("#plano");
     if (!svg) return;
     const equipos = DATOS.equipos;
-    asignarCoordenadas(equipos);
+    const L = asignarCoordenadas(equipos);
+    // viewBox dinámico: crece con la sala (columnas → más alto,
+    // fila del fondo → más ancho).
+    svg.setAttribute("viewBox", `0 0 ${L.W} ${L.H}`);
     const pcs = equipos.filter(e => e.tipo_equipo === "PC");
     const ok = pcs.filter(e => e.estado_actual === "funcional").length;
     const fa = pcs.filter(e => e.estado_actual === "falla").length;
     const na = pcs.filter(e => e.estado_actual === "sin_eval").length;
 
-    let s = `<rect x="8" y="8" width="884" height="604" rx="4" class="sala-fondo"/>`;
+    let s = `<rect x="8" y="8" width="${L.W - 16}" height="${L.H - 16}" rx="4" class="sala-fondo"/>`;
 
     // Frente de sala: pizarrón a la IZQUIERDA
-    s += `<rect class="frente-obj" x="170" y="590" width="170" height="10" rx="2"/>
-          <text class="etiq-zona" x="255" y="584" text-anchor="middle">Pizarrón</text>`;
+    s += `<rect class="frente-obj" x="170" y="${590 + L.dy}" width="170" height="10" rx="2"/>
+          <text class="etiq-zona" x="255" y="${584 + L.dy}" text-anchor="middle">Pizarrón</text>`;
 
     // Frente de sala: TV a la DERECHA del frente (si hay TV registrada).
     // El rectángulo del equipo TV se dibuja igual en su lugar (abajo);
     // esta marca solo indica la zona del frente.
     const tv = equipos.find(e => e.tipo_equipo === "TV" || e.tipo_equipo === "Proyector");
     if (tv && !tv.x) {
-        s += `<text class="etiq-zona" x="770" y="584" text-anchor="middle">Zona TV / Proyector</text>`;
+        s += `<text class="etiq-zona" x="${L.W - 130}" y="${584 + L.dy}" text-anchor="middle">Zona TV / Proyector</text>`;
     }
 
-    // Puerta: abajo a la DERECHA, junto al switch
-    s += `<rect class="puerta" x="620" y="606" width="76" height="12"/>
-          <path class="puerta-arco" d="M620 610 A76 76 0 0 1 696 534"/>
-          <line class="puerta-linea" x1="696" y1="610" x2="696" y2="534"/>
-          <text class="etiq-zona etiq-puerta" x="612" y="602" text-anchor="end">Puerta</text>`;
+    // Puerta: abajo a la DERECHA, junto al switch. Si el plano se ensanchó,
+    // la pared derecha se corrió (dx) y la puerta va con ella.
+    const dx = L.W - 900;
+    s += `<rect class="puerta" x="${620 + dx}" y="${606 + L.dy}" width="76" height="12"/>
+          <path class="puerta-arco" d="M${620 + dx} ${610 + L.dy} A76 76 0 0 1 ${696 + dx} ${534 + L.dy}"/>
+          <line class="puerta-linea" x1="${696 + dx}" y1="${610 + L.dy}" x2="${696 + dx}" y2="${534 + L.dy}"/>
+          <text class="etiq-zona etiq-puerta" x="${612 + dx}" y="${602 + L.dy}" text-anchor="end">Puerta</text>`;
 
     // Resumen en el centro de la U
-    s += `<text class="resumen-cifra" x="450" y="268" text-anchor="middle">${ok}<tspan class="resumen-total">/${pcs.length}</tspan></text>`;
-    s += `<text class="resumen-texto" x="450" y="302" text-anchor="middle">computadoras operativas</text>`;
+    s += `<text class="resumen-cifra" x="${L.W / 2}" y="${268 + L.dy / 2}" text-anchor="middle">${ok}<tspan class="resumen-total">/${pcs.length}</tspan></text>`;
+    s += `<text class="resumen-texto" x="${L.W / 2}" y="${302 + L.dy / 2}" text-anchor="middle">computadoras operativas</text>`;
     const seg = pcs.slice().sort((a, b) =>
         ORDEN_SEGMENTOS.indexOf(a.estado_actual) - ORDEN_SEGMENTOS.indexOf(b.estado_actual));
     seg.forEach((p, i) => {
-        s += `<rect class="seg-${p.estado_actual}" x="${450 - pcs.length * 9 + i * 18}" y="320" width="14" height="14" rx="2"/>`;
+        s += `<rect class="seg-${p.estado_actual}" x="${L.W / 2 - pcs.length * 9 + i * 18}" y="${320 + L.dy / 2}" width="14" height="14" rx="2"/>`;
     });
-    s += `<text class="resumen-detalle" x="450" y="362" text-anchor="middle">${fa} con falla · ${na} sin evaluar</text>`;
+    s += `<text class="resumen-detalle" x="${L.W / 2}" y="${362 + L.dy / 2}" text-anchor="middle">${fa} con falla · ${na} sin evaluar</text>`;
 
     s += equipos.map(svgMesa).join("");
     svg.innerHTML = s;
