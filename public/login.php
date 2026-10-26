@@ -104,7 +104,7 @@ function redirigirSegunRol($rol) {
     <title>SIGRA-ETSR · Iniciar sesión</title>
     <link rel="stylesheet" href="/css/theme.css">
     <link rel="stylesheet" href="/css/estilos.css?v=8">
-    <link rel="stylesheet" href="/css/login.css?v=5">
+    <link rel="stylesheet" href="/css/login.css?v=6">
 </head>
 <body class="cuerpo-login">
 
@@ -163,10 +163,7 @@ function redirigirSegunRol($rol) {
             </label>
             <button class="btn" type="submit">Ingresar</button>
         </form>
-        <div class="pie-escudo">
-            <img src="/img/logo-etsr.png" alt="Escudo de la Escuela Técnica Superior de Rivera (UTU)" class="escudo">
-            <p class="pie-login">Desarrollado por AccessNet S.R.L. para la Escuela Técnica Superior de Rivera.</p>
-        </div>
+        <p class="pie-login">Desarrollado por AccessNet S.R.L. para la Escuela Técnica Superior de Rivera.</p>
     </div>
 
 </div>
@@ -174,18 +171,35 @@ function redirigirSegunRol($rol) {
 <script>
 /* Red animada del panel de marca: nodos aqua y blancos que derivan,
    se enlazan entre sí y sueltan paquetes. Máximo 60 nodos en
-   escritorio; 0 en móvil (<=720px, el canvas ni se ve). Se pausa con
-   el botón, con document.hidden y con prefers-reduced-motion. */
+   escritorio; 0 en móvil (<=720px, el canvas ni se ve).
+   Arranca CORRIENDO al cargar; con prefers-reduced-motion arranca
+   pausada y el botón ofrece "Reanudar movimiento". Se pausa además
+   con el botón y con document.hidden. Inicializa en DOMContentLoaded
+   y recalcula el tamaño con ResizeObserver. */
 (function () {
     var cv = document.getElementById("red"), cx = cv.getContext("2d");
     var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var movil = window.matchMedia("(max-width: 720px)");
+
+    /* Estado de ejecución: corre salvo que el sistema pida reducir
+       movimiento. El botón refleja siempre este estado. */
     var run = !reduce;
     var W = 0, H = 0, N = [], P = [], raf;
+    var pausa = document.getElementById("pausa");
+
+    function sincronizarBoton() {
+        pausa.textContent = run ? "Pausar movimiento" : "Reanudar movimiento";
+        pausa.setAttribute("aria-pressed", run ? "false" : "true");
+    }
+
+    sincronizarBoton();
 
     function size() {
         var r = cv.getBoundingClientRect();
-        if (!r.width) return;
+        /* Sin layout todavía, canvas oculto (móvil) o mismo tamaño
+           que el último cálculo: nada que hacer (la llamada inicial
+           del ResizeObserver cae acá y no redibuja de más). */
+        if (!r.width || (r.width === W && r.height === H)) return;
         var d = window.devicePixelRatio || 1;
         W = r.width; H = r.height;
         cv.width = W * d; cv.height = H * d;
@@ -200,7 +214,10 @@ function redirigirSegunRol($rol) {
             });
         }
         P = [];
-        frame(true);
+        /* Primer cuadro inmediato: "once" solo evita MOVER los nodos
+           cuando está pausada; si corre, el cuadro mueve y el loop
+           se agenda solo. */
+        frame(!run);
     }
 
     function frame(once) {
@@ -232,7 +249,7 @@ function redirigirSegunRol($rol) {
         }
         P = P.filter(function (p) { return p.t < 1; });
         P.forEach(function (p) {
-            p.t += .018;
+            if (run && !once) p.t += .018;
             var a = N[p.l[0]], b = N[p.l[1]];
             cx.fillStyle = "rgba(0,196,204,.9)";
             cx.beginPath();
@@ -243,20 +260,46 @@ function redirigirSegunRol($rol) {
             cx.fillStyle = a.blanco ? "rgba(255,255,255,.55)" : "rgba(0,196,204,.85)";
             cx.beginPath(); cx.arc(a.x, a.y, 2.4, 0, 7); cx.fill();
         });
-        if (!once && run) raf = requestAnimationFrame(function () { frame(); });
+        /* El loop se agenda SIEMPRE que esté corriendo, también en el
+           cuadro inicial. Acá estaba el bug: la re-agenda estaba
+           protegida por !once y size() llamaba frame(true), así que
+           la red nacía congelada hasta tocar el botón dos veces o
+           cambiar de pestaña. */
+        if (run) raf = requestAnimationFrame(function () { frame(); });
     }
 
-    document.getElementById("pausa").addEventListener("click", function () {
+    pausa.addEventListener("click", function () {
         run = !run;
-        this.textContent = run ? "Pausar movimiento" : "Reanudar movimiento";
-        if (run) frame();
+        sincronizarBoton();
+        if (run) {
+            frame();                    /* reanuda: mueve + agenda */
+        } else {
+            cancelAnimationFrame(raf);  /* congela el último cuadro */
+        }
     });
-    window.addEventListener("resize", size);
+
     document.addEventListener("visibilitychange", function () {
         cancelAnimationFrame(raf);
         if (!document.hidden && run) frame();
     });
-    size();
+
+    function iniciar() {
+        /* Tamaño: ResizeObserver recalcula cuando el panel cambia
+           (rotación, primer layout tardío); respaldo para navegadores
+           sin soporte: resize de ventana. */
+        if (window.ResizeObserver) {
+            new ResizeObserver(function () { size(); }).observe(cv);
+        } else {
+            window.addEventListener("resize", size);
+        }
+        size();   /* primer cuadro inmediato (+ loop si corresponde) */
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", iniciar);
+    } else {
+        iniciar();
+    }
 })();
 
 /* Botón "Ingresar": al enviar, spinner + texto atenuado. El botón NO

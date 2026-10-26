@@ -268,22 +268,10 @@
     to { transform: rotate(360deg); }
 }
 
-/* ── Pie con escudo de la escuela ── */
-.pie-escudo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    margin-top: 34px;
-}
-
-.pie-escudo .escudo {
-    height: 64px;
-    width: auto;
-}
-
+/* ── Pie: crédito de desarrollo. El escudo de la ETSR vive una sola
+   vez, arriba, junto al logo de AccessNet (.marcas). ── */
 .pie-login {
-    margin: 0;
+    margin: 34px 0 0;
     color: var(--muted, #5f7a86);
     font-size: 0.85rem;
     text-align: center;
