@@ -51,18 +51,24 @@ mysql -u root -p -D sigra_prueba < bd/D-03_estructura.sql
 disposición física real (fila 1: 5 PCs, fila 2: 3 PCs, fila 3: 5 PCs), más
 un switch y un TV de la sala, y **tres usuarios de ejemplo**:
 
-| usuario  | rol      | contraseña de ejemplo | hash SHA-256 |
-|----------|----------|-----------------------|--------------|
-| `admin`  | admin    | `ejemplo_admin_123`   | `613d47a24381bc4fd9f5be42212419543876de81dc511b5b45a6991b1d7a920f` |
-| `soporte`| tecnico  | `ejemplo_soporte_123` | `49b147038c14b0e671c3d10ed438128aef2e0e294e2ae7f6aff4fef526a07f24` |
-| `docente` | docente  | `ejemplo_docente_123` | `d30475b41abe8b136274b217f98c768e15980dee9130027c5fa39d64fc4d88d3` |
+| usuario  | rol      | contraseña de ejemplo |
+|----------|----------|-----------------------|
+| `admin`  | admin    | `ejemplo_admin_123`   |
+| `soporte`| tecnico  | `ejemplo_soporte_123` |
+| `docente` | docente  | `ejemplo_docente_123` |
 
 > **Solo para instalación inicial: cambiarlas.**
 > Estas contraseñas son públicas y están en el repositorio. Antes de poner
-> el sistema en uso real, cambiá las tres desde `admin/usuarios.php` (o
-> actualizando la columna `contraseña` con `hash('sha256', $nueva)`).
+> el sistema en uso real, cambiá las tres desde `admin/usuarios.php`.
 > Los usuarios del servidor NO son estos: son los reales de la institución
 > y no están en este repositorio.
+
+**Contraseñas**: la app hoy usa **bcrypt** (`includes/clave.php`, con
+`password_hash()` / `password_verify()`). Los hashes SHA-256 que deja el
+seed son **legados**: se aceptan una sola vez y, tras el primer inicio
+de sesión correcto de cada cuenta, se reescriben automáticamente a
+bcrypt en la tabla `usuarios`. A partir de ahí esa cuenta ya solo
+funciona con el código nuevo.
 
 Las etiquetas de las PCs (`PC-7296`, `PC-7288`, …) son las de los equipos de
 la sala piloto; el estado inicial de todas es `sin_eval` (todas las PCs
@@ -91,9 +97,10 @@ nacen en `sin_eval`, `sin_eval` es el estado por defecto de la tabla).
   control de la sala completa se pueda atribuir a una sala) y su índice
   `idx_fotos_sala (id_sala, tipo, fecha_subida)`. Es idempotente.
 
-- **Contraseñas**: el proyecto usa SHA-256 (RNF-02 de la ESRE), no
-  `password_hash()`. El login compara con
-  `hash('sha256', $contraseña) !== $registro['contraseña']`.
+- **Contraseñas**: la app usa bcrypt (`includes/clave.php`:
+  `password_hash()` / `password_verify()`). Los hashes SHA-256 del seed
+  son legados: se aceptan una sola vez y se reescriben a bcrypt al
+  primer inicio de sesión de cada cuenta (ver arriba).
 
 - **Collation**: la base real usa `utf8mb4_general_ci`. El script la crea
   con esa misma collation (antes decía `utf8mb4_spanish_ci`).
