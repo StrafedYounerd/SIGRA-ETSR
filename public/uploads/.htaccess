@@ -1,0 +1,7 @@
+# SIGRA-ETSR · Bloquear ejecución de PHP en la carpeta de subidas
+# Los archivos subidos (fotos) nunca deben ejecutarse como scripts.
+<FilesMatch "\.ph(p[0-9]?|tml|ar)$">
+    SetHandler none
+    Require all denied
+</FilesMatch>
+php_flag engine off
