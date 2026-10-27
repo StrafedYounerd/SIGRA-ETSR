@@ -27,6 +27,20 @@ mysql -u root -p < bd/migracion_fotos_sala.sql
 
 Cada script selecciona la base por sí solo (no hace falta pasar `-D`).
 
+### Paso previo: configuración de la base
+
+Antes de levantar la app, copiar la plantilla y completar los datos:
+
+```bash
+cp config/db.example.php config/db.php
+# editar config/db.php y reemplazar los COMPLETAR_* (o definir las
+# variables MYSQL_* en .env / docker-compose.yml)
+```
+
+`config/db.php` está ignorado por git; `config/db.example.php` es la
+plantilla versionada. Con docker-compose y el `.env` ya cargado,
+alcanza con copiar el archivo sin editarlo.
+
 ### Instalar en otra base (por ejemplo una de pruebas)
 
 Los tres scripts leen la variable de sesión `@sigra_db`. Si está definida,
