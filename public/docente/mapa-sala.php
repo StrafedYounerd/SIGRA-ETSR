@@ -149,7 +149,13 @@ ui_head([
     El "?v=N" es cache-busting: si modificás mapa.js o mapa.css y los
     cambios no se reflejan en el navegador, subí este número (v=5, v=6...)
     para forzar la descarga de la versión nueva.
+
+    layout-plano.js va PRIMERO: define calcularLayout() y sus
+    constantes (ORIENTACION, MAX_POR_FILA). mapa.js las usa para ubicar
+    cada equipo. El editor de admin carga el mismo archivo, así el
+    plano del docente y el editor siempre coinciden.
 -->
-<script src="/js/mapa.js?v=6"></script>
+<script src="/js/layout-plano.js?v=1"></script>
+<script src="/js/mapa.js?v=7"></script>
 
 <?php ui_foot(); ?>
