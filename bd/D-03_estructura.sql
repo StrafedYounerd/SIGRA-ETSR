@@ -262,7 +262,7 @@ INSERT INTO pcs (id_sala, etiqueta, fila, posicion, tipo_equipo, estado_actual) 
 (1, 'PC-7291', 1, 3, 'PC', 'sin_eval'),
 (1, 'PC-7283', 1, 4, 'PC', 'sin_eval'),
 (1, 'PC-7286', 1, 5, 'PC', 'sin_eval'),
-(1, 'PC-7287', 2, 1, 'PC', 'sin_eval'),
+(1, 'PC-7281', 2, 1, 'PC', 'sin_eval'),
 (1, 'PC-7292', 2, 2, 'PC', 'sin_eval'),
 (1, 'PC-7284', 2, 3, 'PC', 'sin_eval'),
 (1, 'PC-7290', 3, 1, 'PC', 'sin_eval'),
