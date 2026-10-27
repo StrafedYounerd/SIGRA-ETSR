@@ -63,6 +63,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // PASO 6: credenciales válidas, crear la sesión.
         } else {
+            // Endurecimiento: renovar el identificador de sesión tras
+            // el login (mitiga session fixation). delete_old_session
+            // (true) descarta el ID viejo del lado del servidor; la
+            // cookie nueva se emite con los parámetros fijados en
+            // auth.php antes de session_start().
+            session_regenerate_id(true);
+
             $_SESSION['id_usuario'] = $registro['id_usuario'];
             $_SESSION['nombre']     = $registro['nombre'];
             $_SESSION['rol']        = $registro['rol'];

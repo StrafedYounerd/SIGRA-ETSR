@@ -8,11 +8,37 @@
 // protegida del sistema. Centraliza la lógica de sesión para no
 // repetirla en cada archivo de public/.
 
+// ── Parámetros de la cookie de sesión ──
+// Endurecimiento: HttpOnly (JS no lee la cookie), SameSite=Lax
+// (mitiga CSRF en peticiones cross-site) y strict mode (PHP rechaza
+// identificadores de sesión que no creó él). La bandera Secure SOLO
+// se activa si la petición llegó por HTTPS real: no se confía en
+// cabeceras X-Forwarded-*, y hoy el sistema corre por HTTP.
+// Se usa en TODOS los lugares que crean o borran la cookie para que
+// el navegador las considere la misma (path/samesite/httponly deben
+// coincidir exactamente para poder sobrescribir la cookie).
+function parametrosCookieSesion() {
+    return [
+        'httponly' => true,
+        'samesite' => 'Lax',
+        'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+    ];
+}
+
 // ── Iniciar la sesión PHP ──
 // session_start() debe llamarse ANTES de cualquier salida HTML.
 // Si ya hay una sesión iniciada (por ejemplo porque login.php ya la
 // inició), PHP no la reinicia, solo continúa usando la existente.
+// Los parámetros de cookie (httponly/samesite/secure) deben fijarse
+// ANTES de cada session_start() para que apliquen; use_strict_mode
+// es una directiva de php.ini, no un parámetro de cookie, así que se
+// fija con ini_set().
 if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.use_strict_mode', '1');
+    session_set_cookie_params(array_merge(
+        ['lifetime' => 0, 'path' => '/'],
+        parametrosCookieSesion()
+    ));
     session_start();
 }
 
@@ -41,13 +67,20 @@ function verificarSesion() {
         // Sesión expirada por inactividad
         session_unset();
         session_destroy();
-        // Eliminar cookies de sesión
+        // Eliminar cookies de sesión (con los MISMOS parámetros con
+        // los que se creó: path/samesite/httponly/secure deben
+        // coincidir para que el navegador la sobrescriba de verdad;
+        // samesite va en el array de opciones)
         if (ini_get("session.use_cookies")) {
-            $params = session_get_cookie_params();
-            setcookie(session_name(), '', time() - 42000,
-                $params["path"], $params["domain"],
-                $params["secure"], $params["httponly"]
-            );
+            $params = array_merge(session_get_cookie_params(), parametrosCookieSesion());
+            setcookie(session_name(), '', array(
+                'expires'  => time() - 42000,
+                'path'     => $params["path"],
+                'domain'   => $params["domain"],
+                'secure'   => $params["secure"],
+                'httponly' => $params["httponly"],
+                'samesite' => $params['samesite'],
+            ));
         }
         header("Location: /login.php?timeout=1");
         exit();
@@ -125,6 +158,21 @@ function cerrarSesion() {
     session_unset();
     // session_destroy() elimina la sesión completa del servidor.
     session_destroy();
+    // Borra también la cookie del navegador con los MISMOS parámetros
+    // con los que se creó (path/samesite/httponly/secure deben
+    // coincidir para que el navegador la sobrescriba de verdad;
+    // samesite va en el array de opciones).
+    if (ini_get("session.use_cookies")) {
+        $params = array_merge(session_get_cookie_params(), parametrosCookieSesion());
+        setcookie(session_name(), '', array(
+            'expires'  => time() - 42000,
+            'path'     => $params["path"],
+            'domain'   => $params["domain"],
+            'secure'   => $params["secure"],
+            'httponly' => $params["httponly"],
+            'samesite' => $params['samesite'],
+        ));
+    }
     // Redirige al login después de cerrar sesión.
     header("Location: /login.php");
     exit();
