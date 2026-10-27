@@ -1,7 +1,11 @@
 config/db.php
+config/*.php
 .env
 *.bak
 *.backup
+*.tar.gz
+*.sql.gz
+*.dump
 
 # artefacto local y fotos subidas por usuarios
 SIGRA
