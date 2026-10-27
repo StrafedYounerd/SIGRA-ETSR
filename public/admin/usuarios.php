@@ -9,6 +9,7 @@
 require '../../includes/auth.php';
 require '../../config/db.php';
 require '../../includes/ui.php';
+require '../../includes/clave.php';
 
 requerirRol(['admin']);
 
@@ -47,7 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $accion === 'crear') {
         if ($verificar->get_result()->fetch_assoc()) {
             $error = "Ese nombre de usuario ya está en uso. Elegí otro.";
         } else {
-            $hash = hash('sha256', $contraseña);
+            // Alta con bcrypt (ver includes/clave.php).
+            $hash = hashearContrasena($contraseña);
 
             $insertar = $conexion->prepare(
                 "INSERT INTO usuarios (nombre, usuario, contraseña, rol, activo)
@@ -107,9 +109,10 @@ if ($accion === 'editar') {
             if ($verificar->get_result()->fetch_assoc()) {
                 $error = "Ese nombre de usuario ya está en uso. Elegí otro.";
             } else {
-                // Si se cambió la contraseña, hashearla; sino mantener la actual
+                // Si se cambió la contraseña, hashearla (bcrypt, ver
+                // includes/clave.php); sino mantener la actual
                 if ($contraseña !== '') {
-                    $hash = hash('sha256', $contraseña);
+                    $hash = hashearContrasena($contraseña);
                     $actualizar = $conexion->prepare(
                         "UPDATE usuarios SET nombre = ?, usuario = ?, contraseña = ?, rol = ?, activo = ?
                          WHERE id_usuario = ?"

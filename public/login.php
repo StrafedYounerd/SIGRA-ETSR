@@ -7,6 +7,7 @@
 
 require '../includes/auth.php';
 require '../config/db.php';
+require '../includes/clave.php';
 
 // Si el usuario ya tiene una sesión activa, no tiene sentido que
 // vea el formulario de login de nuevo: lo mandamos directo a su panel.
@@ -51,10 +52,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$registro) {
             $error = "Usuario o contraseña incorrectos";
 
-        // PASO 4: verificar la contraseña comparando el hash.
-        // hash('sha256', ...) genera el mismo tipo de hash que usamos
-        // al cargar los datos de prueba en el script SQL.
-        } elseif (hash('sha256', $contraseña) !== $registro['contraseña']) {
+        // PASO 4: verificar la contraseña contra el hash guardado.
+        // Acepta bcrypt (nuevo) y SHA-256 legado (seed inicial);
+        // ver includes/clave.php. Los hashes legados se reescriben
+        // como bcrypt recién tras verificar también activo y rol.
+        } elseif (!verificarContrasena($contraseña, $registro['contraseña'])) {
             $error = "Usuario o contraseña incorrectos";
 
         // PASO 5: verificar que la cuenta está activa.
@@ -73,6 +75,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['id_usuario'] = $registro['id_usuario'];
             $_SESSION['nombre']     = $registro['nombre'];
             $_SESSION['rol']        = $registro['rol'];
+
+            // Migración a bcrypt: si el hash guardado era legado
+            // (SHA-256) y la contraseña es correcta, se reescribe
+            // como bcrypt AHORA, en este mismo login. Si el UPDATE
+            // falla no se interrumpe el login (ver migrarHashLegado):
+            // el usuario entra igual y se reintenta la próxima vez.
+            if (!esHashBcrypt($registro['contraseña'])) {
+                migrarHashLegado($conexion, $registro['id_usuario'], $contraseña);
+            }
 
             // PASO 7: redirigir según el rol.
             redirigirSegunRol($registro['rol']);
