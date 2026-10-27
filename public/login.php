@@ -133,7 +133,7 @@ function redirigirSegunRol($rol) {
          En móvil (<=720px) queda una franja con logo + título, sin canvas. -->
     <div class="login-marca">
         <canvas id="red" aria-hidden="true"></canvas>
-        <button class="pausa" id="pausa" type="button">Pausar movimiento</button>
+        <button class="pausa" id="pausa" type="button" aria-pressed="false">Pausar movimiento</button>
         <div class="texto">
             <span class="logo-pastilla">
                 <img src="/img/logo-accessnet.png" alt="Logo de AccessNet">
