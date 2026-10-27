@@ -595,6 +595,9 @@ ui_head([
                     <td>
                         <?php if ($s['activa']): ?>
                             <a href="salas.php?accion=editar_sala&id=<?php echo $s['id_sala']; ?>">Editar</a> |
+                            <a href="plano-editor.php?id_sala=<?php echo $s['id_sala']; ?>">
+                                Agregar PCs en el plano
+                            </a> |
                             <a href="salas.php?accion=desactivar_sala&id=<?php echo $s['id_sala']; ?>"
                                onclick="return confirm('¿Desactivar la sala <?php echo htmlspecialchars($s['nombre_sala']); ?>?');">
                                 Desactivar
