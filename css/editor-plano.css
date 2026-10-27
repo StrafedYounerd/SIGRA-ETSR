@@ -1,0 +1,187 @@
+/* ============================================================
+   SIGRA-ETSR · Componente B
+   css/editor-plano.css — Editor de plano (CU-09)
+   ============================================================
+   Consume las variables de css/theme.css (fuente única de la paleta).
+   Aqua = selección y botón principal; navy = texto y secundario.
+   ============================================================ */
+.editor-plano { max-width: 1400px; margin: 0 auto; }
+
+/* ── Barra superior ── */
+.editor-plano__barra {
+    display: flex; flex-wrap: wrap; align-items: flex-end;
+    justify-content: space-between; gap: 14px; padding: 14px 16px;
+    margin-bottom: 14px; background: var(--color-superficie);
+    border: 1px solid var(--color-borde); border-top: 4px solid var(--aqua);
+    border-radius: var(--radio); box-shadow: var(--sombra);
+}
+.editor-plano__sala { display: flex; flex-direction: column; gap: 4px; }
+.editor-plano__sala label { font-size: .78rem; font-weight: 600; color: var(--color-texto-suave); }
+.editor-plano__sala select {
+    min-width: 220px; padding: 8px 10px; border: 1px solid var(--color-borde);
+    border-radius: var(--radio-chico); background: var(--color-superficie);
+    color: var(--ink); font-size: .95rem; font-family: inherit;
+}
+.editor-plano__acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ── Botones ── */
+.btn-editor {
+    padding: 8px 14px; border: 1px solid var(--color-borde);
+    border-radius: var(--radio-chico); background: var(--color-superficie-alt);
+    color: var(--navy); font-size: .88rem; font-weight: 600;
+    font-family: inherit; cursor: pointer;
+}
+.btn-editor:hover:not(:disabled) { background: #eaf7f8; border-color: var(--aqua); }
+.btn-editor:focus-visible { outline: 3px solid var(--aqua); outline-offset: 2px; }
+.btn-editor:disabled { opacity: .45; cursor: not-allowed; }
+.btn-editor--principal { background: var(--aqua); border-color: var(--aqua); color: #fff; }
+.btn-editor--principal:hover:not(:disabled) { background: var(--aqua-hover); border-color: var(--aqua-hover); }
+.btn-editor--agregar {
+    background: var(--color-superficie); border-color: var(--aqua);
+    border-style: dashed; color: var(--aqua-text);
+}
+
+/* ── Cuerpo: plano + panel ── */
+.editor-plano__cuerpo {
+    display: grid; grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 14px; align-items: start;
+}
+.editor-plano__plano, .editor-plano__panel {
+    background: var(--color-superficie); border: 1px solid var(--color-borde);
+    border-radius: var(--radio); box-shadow: var(--sombra); padding: 14px;
+}
+.editor-plano__panel { position: sticky; top: 16px; }
+.editor-plano__panel h2 { font-size: 1rem; margin-bottom: 12px; }
+
+/* ── Pista de estado ── */
+.editor-plano__pista {
+    padding: 8px 12px; margin-bottom: 10px; border-radius: var(--radio-chico);
+    background: var(--aqua-50); border: 1px solid var(--color-borde-suave);
+    color: var(--color-texto); font-size: .85rem;
+}
+.editor-plano__pista.is-error {
+    background: #fdecea; border-color: #f2b8b5;
+    color: var(--peligro-texto); font-weight: 600;
+}
+.editor-plano__pista.is-ok {
+    background: var(--estado-activo-fondo); border-color: var(--estado-solucionado-borde);
+    color: var(--estado-activo-texto); font-weight: 600;
+}
+
+/* ── Plano (SVG) ── */
+.editor-plano__svg-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.editor-plano__svg-wrap svg { display: block; width: 100%; min-width: 560px; height: auto; }
+.editor-plano__svg-wrap .pared {
+    fill: none; stroke: var(--navy); stroke-width: 3; stroke-linecap: round;
+}
+.editor-plano__svg-wrap .mesa { fill: var(--color-superficie-alt); stroke: var(--line); stroke-width: 1.5; }
+.editor-plano__svg-wrap .mesa-ocupada { fill: #d9d9d9; stroke: #b9bec2; }
+.editor-plano__svg-wrap .mesa-ocupada text { fill: #6b767d; }
+.editor-plano__svg-wrap .lugar-libre {
+    fill: var(--color-superficie); stroke: var(--aqua); stroke-width: 2;
+    stroke-dasharray: 5 4; cursor: pointer;
+}
+.editor-plano__svg-wrap .lugar-libre:hover { fill: var(--aqua-50); stroke-width: 3; }
+.editor-plano__svg-wrap .lugar-libre:focus-visible { outline: none; stroke: var(--navy); stroke-width: 3.5; }
+.editor-plano__svg-wrap .lugar-libre .etiqueta {
+    fill: var(--aqua-text); font-size: 13px; font-weight: 700;
+    text-anchor: middle; pointer-events: none;
+}
+.editor-plano__svg-wrap .lugar-libre.lugar-elegido {
+    fill: var(--aqua-50); stroke: var(--aqua); stroke-width: 2.5; stroke-dasharray: none;
+}
+.editor-plano__svg-wrap .lugar-libre.lugar-elegido .etiqueta { fill: var(--navy); }
+.editor-plano__svg-wrap .lugar-libre.lugar-error { stroke: var(--peligro-texto); stroke-width: 3; fill: #fdecea; }
+.editor-plano__svg-wrap .agregar-lugar {
+    fill: var(--color-superficie); stroke: var(--aqua); stroke-width: 2;
+    stroke-dasharray: 4 3; cursor: pointer;
+}
+.editor-plano__svg-wrap .agregar-lugar:hover { fill: var(--aqua-50); }
+.editor-plano__svg-wrap .agregar-lugar:focus-visible { outline: none; stroke: var(--navy); stroke-width: 3.5; }
+.editor-plano__svg-wrap .agregar-lugar .mas {
+    fill: var(--aqua-text); font-size: 20px; font-weight: 700;
+    text-anchor: middle; pointer-events: none;
+}
+
+/* ── Panel: selector de fila, lista y total ── */
+.editor-plano__filas {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid var(--color-borde-suave);
+}
+.editor-plano__filas label { font-size: .78rem; font-weight: 600; color: var(--color-texto-suave); }
+.editor-plano__filas select {
+    padding: 6px 8px; border: 1px solid var(--color-borde);
+    border-radius: var(--radio-chico); background: var(--color-superficie);
+    color: var(--ink); font-size: .85rem; font-family: inherit;
+}
+.editor-plano__lista {
+    list-style: none; margin: 0; padding: 0; max-height: 320px; overflow-y: auto;
+}
+.editor-plano__lista li {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 7px 0; border-bottom: 1px solid var(--color-borde-suave); font-size: .88rem;
+}
+.editor-plano__lista .lugar { color: var(--color-texto-suave); font-size: .78rem; white-space: nowrap; }
+.editor-plano__lista .codigo { font-family: var(--fuente-mono); font-weight: 700; color: var(--navy); }
+.editor-plano__lista .quitar {
+    all: unset; cursor: pointer; color: var(--peligro-texto);
+    font-weight: 700; padding: 0 4px; line-height: 1;
+}
+.editor-plano__lista .quitar:focus-visible { outline: 2px solid var(--aqua); border-radius: 3px; }
+.editor-plano__total {
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid var(--color-borde-suave); font-size: .9rem; color: var(--color-texto-suave);
+}
+.editor-plano__total b { color: var(--navy); }
+
+/* ── Diálogos ── */
+.editor-plano__dlg {
+    width: min(460px, calc(100vw - 32px)); padding: 20px;
+    border: 1px solid var(--color-borde); border-radius: var(--radio);
+    box-shadow: var(--sombra-hover); color: var(--ink);
+}
+.editor-plano__dlg::backdrop { background: rgba(0, 42, 61, .45); }
+.editor-plano__dlg h2 { font-size: 1.05rem; }
+.editor-plano__dlg label {
+    display: block; margin: 10px 0 4px;
+    font-size: .8rem; font-weight: 600; color: var(--color-texto-suave);
+}
+.editor-plano__dlg input[type="text"], .editor-plano__dlg textarea, .editor-plano__dlg select {
+    width: 100%; padding: 9px 10px; border: 1px solid var(--color-borde);
+    border-radius: var(--radio-chico); background: var(--color-superficie);
+    color: var(--ink); font-size: .95rem; font-family: inherit;
+}
+.editor-plano__dlg textarea { font-family: var(--fuente-mono); resize: vertical; }
+.editor-plano__dlg input:focus-visible, .editor-plano__dlg textarea:focus-visible,
+.editor-plano__dlg select:focus-visible { outline: 3px solid var(--aqua); outline-offset: 1px; }
+.editor-plano__dlg .nota { font-size: .78rem; color: var(--color-texto-suave); margin: 8px 0 0; }
+.editor-plano__dlg .nota[hidden] { display: none; }
+.editor-plano__dlg .nota.is-error { color: var(--peligro-texto); font-weight: 600; }
+.editor-plano__dlg code {
+    font-family: var(--fuente-mono); background: var(--aqua-50);
+    padding: 1px 4px; border-radius: 3px;
+}
+.editor-plano__dlg-acciones { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+/* ── Móvil: lista alternativa de lugares libres con checkbox ── */
+.editor-plano__movil {
+    display: none; background: var(--color-superficie); border: 1px solid var(--color-borde);
+    border-radius: var(--radio); box-shadow: var(--sombra); padding: 14px; margin-top: 14px;
+}
+.editor-plano__movil h3 { font-size: .95rem; color: var(--navy); margin: 0 0 8px; }
+.editor-plano__movil ul { list-style: none; margin: 0; padding: 0; max-height: 300px; overflow-y: auto; }
+.editor-plano__movil li { border-bottom: 1px solid var(--color-borde-suave); }
+.editor-plano__movil label {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 2px; font-size: .88rem; cursor: pointer;
+}
+.editor-plano__movil input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--aqua); }
+
+@media (max-width: 720px) {
+    .editor-plano__cuerpo { grid-template-columns: minmax(0, 1fr); }
+    .editor-plano__panel { position: static; }
+    .editor-plano__svg-wrap svg { min-width: 720px; }
+    .editor-plano__barra { padding: 12px; }
+    .editor-plano__acciones .btn-editor { flex: 1 1 auto; }
+    .editor-plano__movil { display: block; }
+}
