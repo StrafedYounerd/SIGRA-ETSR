@@ -156,6 +156,6 @@ ui_head([
     plano del docente y el editor siempre coinciden.
 -->
 <script src="/js/layout-plano.js?v=1"></script>
-<script src="/js/mapa.js?v=7"></script>
+<script src="/js/mapa.js?v=8"></script>
 
 <?php ui_foot(); ?>

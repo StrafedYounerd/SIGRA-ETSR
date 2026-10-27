@@ -253,6 +253,11 @@ const UMBRAL_SIN_TOCAR = 600 * 1024;
 
 // Foto ya procesada por cada selector (clave = id del input).
 const FOTOS_LISTAS = new Map();
+// Compresiones en curso: frena el redibujado del cajón (polling).
+let fotosEnProceso = 0;
+// La foto del reporte (campo-foto) se está comprimiendo: bloquea el
+// envío pero NO deshabilita el botón (la foto es opcional).
+let comprimiendoFoto = false;
 
 function pesoLegible(bytes) {
     return bytes >= 1048576 ? (bytes / 1048576).toFixed(1).replace(".", ",") + " MB"
@@ -260,7 +265,12 @@ function pesoLegible(bytes) {
 }
 
 async function prepararFoto(archivo) {
-    if (!archivo.type.startsWith("image/")) throw new Error("El archivo no es una imagen.");
+    if (!archivo.type.startsWith("image/"))
+        throw new Error("Formato no permitido. Usá una imagen JPG o PNG.");
+    // HEIC (foto de iPhone): el navegador no lo decodifica y el servidor
+    // tampoco lo acepta; mejor un mensaje claro antes de subir nada.
+    if (/^image\/hei[cf]/.test(archivo.type) || /\.hei[cf]$/i.test(archivo.name || ""))
+        throw new Error("Formato no permitido (HEIC). Usá JPG o PNG.");
     if (archivo.type === "image/gif" || archivo.size <= UMBRAL_SIN_TOCAR) return archivo;
     try {
         // imageOrientation: respeta la rotación EXIF (fotos de celular "de costado").
@@ -302,8 +312,8 @@ function htmlSelectorFoto(idInput, idPreview, etiqueta) {
     </div>`;
 }
 
-// Conecta input + vista previa + quitar. alCambiar(archivo|null) avisa al
-// botón de guardar/enviar.
+// Conecta input + vista previa + quitar. alCambiar(archivo|null, procesando)
+// avisa al botón de guardar/enviar; "procesando" es true mientras se comprime.
 function conectarSelectorFoto(idInput, idPreview, alCambiar) {
     const input = document.getElementById(idInput);
     const previa = document.getElementById(idPreview);
@@ -332,7 +342,8 @@ function conectarSelectorFoto(idInput, idPreview, alCambiar) {
         if (!original) { limpiar(); return; }
         previa.hidden = false;
         info.textContent = "Procesando…";
-        aviso(null);
+        aviso(null, true);
+        fotosEnProceso++;
         try {
             const lista = await prepararFoto(original);
             const limite = DATOS.limite_foto || 2097152;
@@ -345,10 +356,12 @@ function conectarSelectorFoto(idInput, idPreview, alCambiar) {
             if (imagen.src.startsWith("blob:")) URL.revokeObjectURL(imagen.src);
             imagen.src = URL.createObjectURL(lista);
             info.textContent = pesoLegible(lista.size);
-            aviso(lista);
+            aviso(lista, false);
         } catch (e) {
             limpiar();
             mostrarError(e.message || "No se pudo leer la foto.");
+        } finally {
+            fotosEnProceso--;
         }
     });
     previa.querySelector(".btn-quitar-foto").addEventListener("click", () => {
@@ -369,12 +382,14 @@ function renderCajon() {
     if (!seleccion) {
         const activos = Object.values(DATOS.reportes);
         let h = `<h2>Reportes activos</h2>`;
+        h += `<div id="lista-reportes">`;
         h += activos.length
             ? `<ul class="lista-act">` + activos.map(r =>
                 `<li><button type="button" data-ir="${r.id_pc}">
                     <span class="c">${esc(r.etiqueta)}</span><span>${esc(r.tipo_falla)}</span>
                  </button></li>`).join("") + `</ul>`
             : `<p class="nota">No hay fallas abiertas en esta sala.</p>`;
+        h += `</div>`;
         // Foto de control de la sala completa
         h += `<div class="seccion-control">
                 <h3>Foto de control de la sala</h3>
@@ -473,6 +488,16 @@ function renderCajon() {
     });
     $("#btn-control-eq").addEventListener("click", () => enviarFotoControl(e.id_pc, "foto-control-eq"));
 
+    // Foto del reporte (opcional): con vista previa, pero SIN frenar el
+    // botón — solo se bloquea el envío mientras se comprime.
+    const inputReporte = conectarSelectorFoto("campo-foto", "previa-foto-reporte", (_foto, procesando) => {
+        comprimiendoFoto = !!procesando;
+        const btn = $("#btn-confirmar-reporte");
+        if (!btn) return;
+        btn.textContent = procesando ? "Preparando foto…" : "Reportar falla";
+    });
+    if (!inputReporte) comprimiendoFoto = false;
+
     $("#btn-cerrar-cajon").addEventListener("click", () => {
         seleccion = null;
         dibujarPlano(); renderCajon();
@@ -500,6 +525,11 @@ function enviarReporte() {
     const error = $("#cajon-error");
     const boton = $("#btn-confirmar-reporte");
     if (boton.disabled) return;   // evita doble envío
+    if (comprimiendoFoto) {      // la foto aún se está comprimiendo
+        error.textContent = "Preparando foto…";
+        error.hidden = false;
+        return;
+    }
 
     error.hidden = true;
 
@@ -529,6 +559,7 @@ function enviarReporte() {
         .then(resp => {
             if (resp.exito) {
                 toast(resp.mensaje || "Falla reportada.");
+                FOTOS_LISTAS.delete("campo-foto");   // limpiar solo tras éxito
                 // Actualización local SIN recargar: el equipo pasa a falla
                 // con ticket pendiente y el cajón muestra el reporte abierto.
                 seleccion.estado_actual = "falla";
@@ -619,9 +650,35 @@ function iniciarPolling() {
 }
 
 function cajonEnUso() {
-    const c = $("#cajon");
-    return FOTOS_LISTAS.size > 0 || (c && c.contains(document.activeElement)
-        && /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName));
+    // ¿Hay algo en curso que un redibujado destruiría? No depende del foco:
+    // foto elegida o comprimiéndose, tipo de falla elegido o texto escrito.
+    const tipo = $("#campo-tipo-falla");
+    const detalle = $("#campo-detalle");
+    const fotoElegida = [...document.querySelectorAll("#cajon input.input-foto")]
+        .some(i => i.files && i.files.length > 0);
+    return FOTOS_LISTAS.size > 0
+        || fotosEnProceso > 0
+        || fotoElegida
+        || (tipo && !!tipo.value)
+        || !!(detalle && detalle.value.trim());
+}
+
+// Refresca SOLO la lista de reportes activos del cajón (la parte que el
+// polling necesita mantener al día), sin tocar inputs ni selects.
+function actualizarListaReportes() {
+    const cont = $("#lista-reportes");
+    if (!cont) return;
+    const activos = Object.values(DATOS.reportes);
+    cont.innerHTML = activos.length
+        ? `<ul class="lista-act">` + activos.map(r =>
+            `<li><button type="button" data-ir="${r.id_pc}">
+                <span class="c">${esc(r.etiqueta)}</span><span>${esc(r.tipo_falla)}</span>
+             </button></li>`).join("") + `</ul>`
+        : `<p class="nota">No hay fallas abiertas en esta sala.</p>`;
+    cont.querySelectorAll("button[data-ir]").forEach(b => b.addEventListener("click", () => {
+        seleccion = DATOS.equipos.find(e => String(e.id_pc) === b.dataset.ir) || null;
+        dibujarPlano(); renderCajon();
+    }));
 }
 
 // Vuelve a pedir la MISMA página y reemplaza el JSON de datos.
@@ -644,8 +701,10 @@ function refrescarSala() {
             }
             dibujarPlano();
             // Sin equipo seleccionado el cajón se redibuja para mostrar reportes
-            // nuevos; pero no si hay una foto elegida o un campo en uso (se perdería).
+            // nuevos; pero no si hay algo en curso (foto, tipo, texto), que se
+            // perdería. En ese caso solo se refresca la lista de reportes.
             if (!seleccion && !cajonEnUso()) renderCajon();
+            else if (!seleccion) actualizarListaReportes();
 
             // resaltar cambios de estado respecto a la versión anterior
             DATOS.equipos.forEach(e => {
