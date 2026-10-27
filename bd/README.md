@@ -72,10 +72,8 @@ un switch y un TV de la sala, y **tres usuarios de ejemplo**:
 | `docente` | docente  | `ejemplo_docente_123` |
 
 > **Solo para instalación inicial: cambiarlas.**
-> Estas contraseñas son públicas y están en el repositorio. Antes de poner
-> el sistema en uso real, cambiá las tres desde `admin/usuarios.php`.
-> Los usuarios del servidor NO son estos: son los reales de la institución
-> y no están en este repositorio.
+> Estas contraseñas son públicas: no uses estas cuentas en un sistema real
+> y cambialas siempre antes de usarlo.
 
 **Contraseñas**: la app hoy usa **bcrypt** (`includes/clave.php`, con
 `password_hash()` / `password_verify()`). Los hashes SHA-256 que deja el
