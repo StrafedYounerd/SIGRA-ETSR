@@ -9,6 +9,14 @@ services:
       - "8080:80"
     environment:
       TZ: America/Montevideo
+      # El servicio web también necesita las credenciales de la base:
+      # config/db.php las lee de getenv() y, si no están, cae a un
+      # fallback literal. MYSQL_HOST es el nombre del servicio de la
+      # base, que es lo que resuelve dentro de la red de Compose.
+      MYSQL_HOST: db
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - ./:/var/www/html
     depends_on:
