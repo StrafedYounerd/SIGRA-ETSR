@@ -81,10 +81,17 @@ function svgEl(nombre, atributos, texto) {
 // ── Normalización de etiquetas ──
 // El admin escribe "305-01" o "PC-305-01": siempre se guarda con el
 // prefijo "PC-" y nunca duplicado ("PC-PC-305-01" no puede pasar).
+// El prefijo va SIEMPRE en mayúsculas ("pc-7281" → "PC-7281"); el
+// resto de la etiqueta se respeta tal como lo escribió el usuario.
 function normalizarEtiqueta(texto) {
     let t = String(texto || "").trim().replace(/\s+/g, " ");
     if (t === "") return "";
-    if (!/^PC-/i.test(t)) t = "PC-" + t;
+    if (/^PC-/i.test(t)) {
+        // Solo el prefijo se pasa a mayúsculas.
+        t = "PC-" + t.slice(3);
+    } else {
+        t = "PC-" + t;
+    }
     return t;
 }
 
@@ -933,15 +940,36 @@ function guardar() {
 
     fetch(DATOS_EDITOR.guardar_url || "plano-guardar.php", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Accept": "application/json",
+        },
         body: cuerpo.toString(),
         credentials: "same-origin",
     })
-        .then(r => r.json().then(d => ({ ok: r.ok, datos: d })))
-        .then(({ ok, datos }) => {
-            if (ok && datos.exito) {
+        .catch(() => ({ tipo: "conexion" }))   // el fetch no llegó al servidor
+        .then(r => (r.tipo === "conexion" ? r : leerRespuesta(r)))
+        .then(resultado => {
+            if (resultado.tipo === "conexion") {
+                refrescar();
+                marcarPista(
+                    "No hay conexión con el servidor. Lo que escribiste se conserva; probá de nuevo.",
+                    "error"
+                );
+                return;
+            }
+            if (resultado.tipo === "sesion" || resultado.tipo === "servidor" || resultado.tipo === "json") {
+                // NUNCA se recarga la página ante un error: el estado
+                // del editor (lo que escribió el admin) se conserva.
+                refrescar();
+                marcarPista(resultado.mensaje, "error");
+                return;
+            }
+            // tipo === "json_ok": llegó un JSON con exito
+            const datos = resultado.datos;
+            if (datos.exito === true) {
                 marcarPista(datos.mensaje || "Equipos guardados.", "ok");
-                // Se recarga la página para traer el plano nuevo del servidor.
+                // Solo en el éxito se recarga, para traer el plano nuevo.
                 window.setTimeout(() => {
                     window.location.href = window.location.pathname
                         + "?id_sala=" + encodeURIComponent(DATOS_EDITOR.sala.id)
@@ -949,19 +977,59 @@ function guardar() {
                 }, 900);
                 return;
             }
-            // Error: se conserva lo escrito y se marca dónde.
+            // JSON con errores: se marca cada equipo en su lugar.
             const errores = datos.errores || [];
             aplicarErroresDelServidor(errores);
             refrescar();
             marcarPista(datos.mensaje || "No se pudo guardar.", "error");
         })
         .catch(() => {
+            // Cualquier otra excepción (por ejemplo, JSON ilegible):
+            // se trata como error del servidor, sin perder lo escrito.
             refrescar();
-            marcarPista("No se pudo guardar: no hay conexión con el servidor.", "error");
+            marcarPista(
+                "El servidor tuvo un error y no se guardó nada; probá de nuevo.",
+                "error"
+            );
         })
         .finally(() => {
             if (btn) btn.disabled = estado.elegidos.size === 0;
         });
+}
+
+// ── Lectura y clasificación de la respuesta del servidor ──
+// La respuesta puede no ser JSON: el servidor redirige al login si
+// venció la sesión o si el rol no tiene permiso, y ante un error
+// fatal de PHP devuelve HTML. En esos casos NO se puede usar
+// r.json() a ciegas: se clasifica la respuesta y se avisa.
+//   tipo "conexion" → no hubo respuesta del servidor
+//   tipo "sesion"   → respuesta no JSON por sesión vencida o sin permiso
+//   tipo "servidor" → respuesta no JSON con status >= 500
+//   tipo "json"     → la respuesta dice ser JSON pero no se puede leer
+//   tipo "json_ok"  → JSON válido (puede traer exito true o false)
+function leerRespuesta(r) {
+    const MSJ_SESION = "Tu sesión venció o no tenés permiso para guardar. "
+        + "Volvé a iniciar sesión en otra pestaña y reintentá: lo que escribiste se conserva.";
+    const MSJ_SERVIDOR = "El servidor tuvo un error y no se guardó nada; probá de nuevo.";
+
+    const contentType = r.headers.get("Content-Type") || "";
+    const esJson = contentType.toLowerCase().includes("application/json");
+    const redirigida = r.redirected || r.url.indexOf("/login.php") !== -1;
+
+    if (!esJson || redirigida) {
+        if (r.status >= 500) {
+            return { tipo: "servidor", mensaje: MSJ_SERVIDOR };
+        }
+        return { tipo: "sesion", mensaje: MSJ_SESION };
+    }
+
+    return r.text().then(texto => {
+        try {
+            return { tipo: "json_ok", datos: JSON.parse(texto) };
+        } catch (e) {
+            return { tipo: "json", mensaje: MSJ_SERVIDOR };
+        }
+    });
 }
 
 // El servidor manda errores en texto ("Equipo "PC-A": fila inválida").

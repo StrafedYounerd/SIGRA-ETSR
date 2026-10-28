@@ -63,6 +63,31 @@ $max_por_fila = 12;   // debe coincidir con MAX_POR_FILA de
                        // js/layout-plano.js (y con $max_por_fila de
                        // public/admin/plano-editor.php).
 
+// ── Normalización de la etiqueta ──
+// La etiqueta que llega del navegador se normaliza SIEMPRE antes de
+// validar el largo y de comparar duplicados:
+//   1) se recortan los espacios de los extremos;
+//   2) los espacios internos se colapsan en uno solo;
+//   3) el prefijo "PC-" va en mayúsculas y se agrega si falta
+//      ("pc-7281" → "PC-7281", "9999" → "PC-9999").
+// Solo el prefijo se pasa a mayúsculas: el resto de la etiqueta se
+// respeta tal como la escribió el usuario.
+// Es la MISMA normalización que hace js/plano-editor.js: el servidor
+// es la autoridad y no confía en lo que mande el navegador.
+function normalizarEtiqueta($texto) {
+    $t = trim((string)$texto);
+    // Colapsar los espacios internos (incluidos tabs y saltos de línea).
+    $t = preg_replace('/\s+/u', ' ', $t);
+    if ($t === '') {
+        return '';
+    }
+    if (preg_match('/^PC-/i', $t)) {
+        // Solo el prefijo pasa a mayúsculas.
+        return 'PC-' . mb_substr($t, 3);
+    }
+    return 'PC-' . $t;
+}
+
 // ── Validación de cada equipo (sin tocar la base todavía) ──
 $errores = [];
 $vistos = [];        // equipos válidos de esta tanda
@@ -70,7 +95,7 @@ $ocupados = [];      // "fila:posicion" ya usadas en ESTA tanda
 $vistos_labels = []; // etiquetas ya vistas en ESTA tanda
 
 foreach ($lugares as $i => $lugar) {
-    $etiqueta = trim((string)($lugar['etiqueta'] ?? ''));
+    $etiqueta = normalizarEtiqueta($lugar['etiqueta'] ?? '');
     $fila     = intval($lugar['fila'] ?? 0);
     $posicion = intval($lugar['posicion'] ?? 0);
 
