@@ -12,3 +12,9 @@ config/*.php
 SIGRA
 public/uploads/fotos/*
 !public/uploads/fotos/index.html
+
+# suite E2E: dependencias, artefactos de corrida e informes generados
+tests/e2e/node_modules/
+tests/e2e/test-results/
+tests/e2e/informes/artefactos/
+tests/e2e/informes/resultados.json
