@@ -71,6 +71,13 @@
 /* ── Plano (SVG) ── */
 .editor-plano__svg-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .editor-plano__svg-wrap svg { display: block; width: 100%; min-width: 560px; height: auto; }
+/* Aviso de scroll horizontal: solo se ve en pantallas chicas. */
+.editor-plano__aviso-scroll {
+    display: none; margin: 0 0 8px; padding: 7px 10px;
+    background: var(--aqua-50); border: 1px solid var(--color-borde-suave);
+    border-radius: var(--radio-chico); color: var(--color-texto);
+    font-size: .82rem; text-align: center;
+}
 .editor-plano__svg-wrap .pared {
     fill: none; stroke: var(--navy); stroke-width: 3; stroke-linecap: round;
 }
@@ -83,6 +90,11 @@
 .editor-plano__svg-wrap .lugar-libre {
     display: flex; align-items: center; justify-content: center;
     width: 100%; height: 100%; padding: 0;
+    /* El botón genérico de estilos.css trae margin-top: 15px: dentro
+       del <foreignObject> eso lo empuja hacia abajo y el borde inferior
+       queda recortado. Acá se anula para que el botón mida lo mismo
+       que la mesa vecina. */
+    margin: 0; box-sizing: border-box; overflow: hidden;
     background-color: var(--color-superficie);
     border: 2px dashed var(--aqua);
     border-radius: 6px; cursor: pointer;
@@ -111,8 +123,11 @@
 .editor-plano__svg-wrap .agregar-lugar:hover { fill: var(--aqua-50); }
 .editor-plano__svg-wrap .agregar-lugar:focus-visible { outline: none; stroke: var(--navy); stroke-width: 3.5; }
 .editor-plano__svg-wrap .agregar-lugar .mas {
-    fill: var(--aqua-text); font-size: 20px; font-weight: 700;
+    fill: var(--aqua-text); font-size: 20px;
     text-anchor: middle; pointer-events: none;
+    /* El <g> pinta con stroke (el borde punteado del botón): sin
+       anularlo, el texto hereda el trazo y se ve engrosado. */
+    stroke: none; font-weight: normal;
 }
 
 /* ── Panel: selector de fila, lista y total ── */
@@ -193,6 +208,7 @@
     .editor-plano__cuerpo { grid-template-columns: minmax(0, 1fr); }
     .editor-plano__panel { position: static; }
     .editor-plano__svg-wrap svg { min-width: 720px; }
+    .editor-plano__aviso-scroll { display: block; }
     .editor-plano__barra { padding: 12px; }
     .editor-plano__acciones .btn-editor { flex: 1 1 auto; }
     .editor-plano__movil { display: block; }

@@ -149,8 +149,24 @@ function dibujarPlano() {
     recalcularSlots();
 
     const L = calcularLayout(estado.slots);
-    // Se deja una franja abajo para la tira de botones "+ fila N".
-    svg.setAttribute("viewBox", `0 0 ${L.W} ${L.H + 46}`);
+
+    // ── Medidas del plano ──
+    // Todo se calcula desde las medidas del layout: no hay números
+    // mágicos para saber dónde termina la sala. La tira de botones
+    // "+ fila N" se ubica DEBAJO de lo más bajo que se dibuja (la
+    // pared inferior o la puerta), así no tapa ni la pared ni el
+    // pizarrón.
+    const MARGEN_SALA = 8;                  // borde del rect de la sala
+    const PIZ_Y = 590 + L.dy, PIZ_H = 10;   // pizarrón
+    const PUERTA_Y = 606 + L.dy, PUERTA_H = 12;   // puerta
+    const ALTO_BOTON = 34, SEP_BOTON = 16;  // tira de "+ fila N"
+
+    const paredInferior = MARGEN_SALA + (L.H - 2 * MARGEN_SALA);   // = L.H - 8
+    const yTira = Math.max(paredInferior, PIZ_Y + PIZ_H, PUERTA_Y + PUERTA_H) + 16;
+    const altoLienzo = yTira + ALTO_BOTON + 16;
+
+    // El lienzo se agranda lo necesario para que la tira entre.
+    svg.setAttribute("viewBox", `0 0 ${L.W} ${altoLienzo}`);
 
     const frag = document.createDocumentFragment();
 
@@ -162,18 +178,18 @@ function dibujarPlano() {
 
     // Pizarrón (frente, a la izquierda)
     frag.appendChild(svgEl("rect", {
-        x: 170, y: 590 + L.dy, width: 170, height: 10, rx: 2,
+        x: 170, y: PIZ_Y, width: 170, height: PIZ_H, rx: 2,
         fill: "#dbe4ea", stroke: "#8aa0af",
     }));
     frag.appendChild(svgEl("text", {
-        x: 255, y: 584 + L.dy, "text-anchor": "middle",
+        x: 255, y: PIZ_Y - 6, "text-anchor": "middle",
         "font-size": 11, fill: "var(--muted)",
     }, "Pizarrón"));
 
     // Puerta (abajo a la derecha, junto al switch)
     const dx = L.W - 900;
     frag.appendChild(svgEl("rect", {
-        x: 620 + dx, y: 606 + L.dy, width: 76, height: 12, fill: "#f1f5f8",
+        x: 620 + dx, y: PUERTA_Y, width: 76, height: PUERTA_H, fill: "#f1f5f8",
     }));
     frag.appendChild(svgEl("path", {
         d: `M${620 + dx} ${610 + L.dy} A76 76 0 0 1 ${696 + dx} ${534 + L.dy}`,
@@ -222,7 +238,7 @@ function dibujarPlano() {
     // con las columnas 1 y 3.
     FILAS.forEach(f => {
         if (estado.slots[f] >= MAX_EDITOR) return;
-        frag.appendChild(dibujarAgregarLugar(f, L));
+        frag.appendChild(dibujarAgregarLugar(f, yTira));
     });
 
     // Resumen en el centro de la U
@@ -260,6 +276,30 @@ function dibujarPlano() {
         ev.preventDefault();
         agregarLugar(Number(mas.dataset.fila));
     };
+
+    // En pantallas chicas el plano scanea en horizontal: se deja
+    // scrolleado en el primer lugar libre, que es donde el admin
+    // quiere empezar a trabajar.
+    scrollAlPrimerLibre(svg);
+}
+
+// ── Scroll horizontal al primer lugar libre ──
+// Solo tiene efecto si el plano realmente no entra en pantalla: en
+// escritorio no mueve nada.
+function scrollAlPrimerLibre(svg) {
+    const wrap = el("plano-wrap");
+    if (!wrap) return;
+    const libre = svg.querySelector("button.lugar-libre");
+    if (!libre) return;
+    // Si el plano entra entero, no hace falta scrollear.
+    if (svg.getBoundingClientRect().width <= wrap.clientWidth + 1) return;
+    const wrapRect = wrap.getBoundingClientRect();
+    const libreRect = libre.getBoundingClientRect();
+    // Se deja el primer lugar libre pegado al borde izquierdo de la
+    // ventana de scroll (con un margen), sea la fila que sea.
+    const margen = 12;
+    const destino = wrap.scrollLeft + (libreRect.left - wrapRect.left) - margen;
+    wrap.scrollLeft = Math.max(0, destino);
 }
 
 // ── Dibujo de una mesa ──
@@ -355,14 +395,14 @@ function dibujarLugarLibre(c, fila, posicion) {
     return fo;
 }
 
-// Botón "+ agregar lugar": va en una tira DEBAJO del plano, uno por
-// fila. (En el extremo de la fila 2 no hay lugar libre: se cruzaría
-// con las columnas 1 y 3.)
-function dibujarAgregarLugar(fila, L) {
+// Botón "+ agregar lugar": va en una tira DEBAJO de la pared inferior
+// del plano, uno por fila. La "y" llega calculada desde las medidas
+// del plano, así la tira nunca tapa la pared ni el pizarrón.
+// (En el extremo de la fila 2 no hay lugar libre: se cruzaría con las
+// columnas 1 y 3.)
+function dibujarAgregarLugar(fila, yTira) {
     const ancho = 150, alto = 34, sep = 16;
-    const total = FILAS.filter(f => estado.slots[f] < MAX_EDITOR).length;
     const idx = FILAS.filter(f => estado.slots[f] < MAX_EDITOR).indexOf(fila);
-    const y = L.H - 26;
 
     const g = svgEl("g", {
         class: "agregar-lugar",
@@ -373,12 +413,12 @@ function dibujarAgregarLugar(fila, L) {
         "aria-label": `Agregar un lugar más en la fila ${fila}`,
     });
     g.appendChild(svgEl("rect", {
-        x: 24 + idx * (ancho + sep), y, width: ancho, height: alto, rx: 6,
+        x: 24 + idx * (ancho + sep), y: yTira, width: ancho, height: alto, rx: 6,
         fill: "var(--color-superficie)", stroke: "var(--aqua)",
         "stroke-width": 2, "stroke-dasharray": "4 3",
     }));
     g.appendChild(svgEl("text", {
-        class: "mas", x: 24 + idx * (ancho + sep) + ancho / 2, y: y + 23,
+        class: "mas", x: 24 + idx * (ancho + sep) + ancho / 2, y: yTira + 23,
         "text-anchor": "middle", "font-size": 14,
     }, `+ fila ${fila}`));
     return g;

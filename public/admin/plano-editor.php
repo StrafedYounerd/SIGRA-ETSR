@@ -138,7 +138,10 @@ ui_head([
                             ? htmlspecialchars($mensaje)
                             : 'Tocá un lugar libre del plano para agregar una PC.'; ?></span>
                     </div>
-                    <div class="editor-plano__svg-wrap">
+                    <p class="editor-plano__aviso-scroll">
+                        Deslizá el plano hacia los costados para ver todo
+                    </p>
+                    <div class="editor-plano__svg-wrap" id="plano-wrap">
                         <svg id="plano-editor" viewBox="0 0 900 620" role="group"
                              aria-label="Plano de la <?php echo htmlspecialchars($sala['nombre_sala']); ?> para agregar equipos">
                         </svg>
