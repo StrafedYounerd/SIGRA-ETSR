@@ -165,15 +165,18 @@
     background-color: var(--line, #d6e6ea);
 }
 
+/* Margen lateral auto: centra el bloque igual que el resto de los
+   hijos de .login-form (la regla `.login-form > *` se pierde acá por
+   especificidad y el título quedaba corrido a la izquierda). */
 .login-form h2 {
-    margin: 0 0 4px;
+    margin: 0 auto 4px;
     font-size: 1.5rem;
     text-align: center;
     color: var(--navy, #003852);
 }
 
 .login-form .sub {
-    margin: 0 0 24px;
+    margin: 0 auto 24px;
     color: var(--muted, #5f7a86);
     font-size: 0.95rem;
     text-align: center;
@@ -271,7 +274,7 @@
 /* ── Pie: crédito de desarrollo. El escudo de la ETSR vive una sola
    vez, arriba, junto al logo de AccessNet (.marcas). ── */
 .pie-login {
-    margin: 34px 0 0;
+    margin: 34px auto 0;
     color: var(--muted, #5f7a86);
     font-size: 0.85rem;
     text-align: center;
@@ -429,6 +432,14 @@
     .login-marca .frase {
         margin: 0;
         font-size: 0.85rem;
+    }
+
+    /* El logo, el título y la frase ya están en la franja superior:
+       se oculta el bloque repetido del lado del formulario. */
+    .login-form .marcas,
+    .login-form h2,
+    .login-form .sub {
+        display: none;
     }
 
     .login-form {

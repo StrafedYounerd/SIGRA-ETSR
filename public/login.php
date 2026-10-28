@@ -122,7 +122,7 @@ function redirigirSegunRol($rol) {
     <title>SIGRA-ETSR · Iniciar sesión</title>
     <link rel="stylesheet" href="/css/theme.css">
     <link rel="stylesheet" href="/css/estilos.css?v=8">
-    <link rel="stylesheet" href="/css/login.css?v=6">
+    <link rel="stylesheet" href="/css/login.css?v=7">
 </head>
 <body class="cuerpo-login">
 
