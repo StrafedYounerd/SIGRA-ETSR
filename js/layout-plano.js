@@ -20,7 +20,8 @@ const ORIENTACION = { 1: "asc", 2: "der", 3: "desc" };
 
 // Tope técnico de posiciones por fila (único cap del plano). El editor
 // de admin no puede agregar más lugares que este número por fila.
-const MAX_POR_FILA = 12;   // debe coincidir con $max_por_fila de
+// Máximo 24 equipos por sala (8 por fila × 3 filas).
+const MAX_POR_FILA = 8;   // debe coincidir con $max_por_fila de
                            // public/admin/plano-guardar.php (y con el
                            // tope que valida plano-editor.php).
 

@@ -69,9 +69,9 @@ foreach ($equipos as $e) {
 }
 
 // Tope de posiciones por fila (el mismo que js/layout-plano.js).
-$max_por_fila = 12;   // debe coincidir con MAX_POR_FILA de
-                       // js/layout-plano.js (y con $max_por_fila de
-                       // public/admin/plano-guardar.php).
+$max_por_fila = 8;   // debe coincidir con MAX_POR_FILA de
+                      // js/layout-plano.js (y con $max_por_fila de
+                      // public/admin/plano-guardar.php).
 
 // Datos para el JS: los equipos que ya están (no se tocan) y los
 // lugares ocupados por (fila, posición).

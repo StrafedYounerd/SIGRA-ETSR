@@ -12,7 +12,7 @@
 //   - El servidor revalida TODO: que la sala exista y esté activa,
 //     que fila/posición sean válidos, que no haya códigos repetidos
 //     ni lugares ya ocupados, y que no se pase del tope de
-//     posiciones por fila (MAX_POR_FILA = 12).
+//     posiciones por fila (MAX_POR_FILA = 8).
 //   - Los chequeos contra la base se hacen DENTRO de la transacción
 //     con SELECT ... FOR UPDATE: la fila de la sala queda bloqueada,
 //     así dos admins que guarden a la vez no pueden pisarse (uno
@@ -59,9 +59,9 @@ if (!is_array($lugares) || count($lugares) === 0) {
 }
 
 // ── Tope de posiciones por fila (mismo número que js/layout-plano.js) ──
-$max_por_fila = 12;   // debe coincidir con MAX_POR_FILA de
-                       // js/layout-plano.js (y con $max_por_fila de
-                       // public/admin/plano-editor.php).
+$max_por_fila = 8;   // debe coincidir con MAX_POR_FILA de
+                      // js/layout-plano.js (y con $max_por_fila de
+                      // public/admin/plano-editor.php).
 
 // ── Normalización de la etiqueta ──
 // La etiqueta que llega del navegador se normaliza SIEMPRE antes de
