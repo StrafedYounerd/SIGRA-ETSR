@@ -11,17 +11,30 @@ tablas, mismas columnas en el mismo orden, mismos tipos, mismos ENUM, mismos
 
 ## Orden de instalación
 
-Los tres archivos se corren **en este orden**. El segundo y el tercero
-dependen de las tablas que crea el primero.
+Los tres archivos se corren **en este orden**, **con el usuario `root`**
+(el usuario de la app no tiene permisos para crear la base ni las tablas).
+El segundo y el tercero dependen de las tablas que crea el primero.
+
+Si la base corre en Docker (lo habitual), el cliente es `mariadb` y los
+comandos completos son:
 
 ```bash
 # 1) estructura base (usuarios, salas, pcs, tickets, historial, sesiones)
-mysql -u root -p < bd/D-03_estructura.sql
+docker exec -i sigra-db mariadb -uroot -p < bd/D-03_estructura.sql
 
 # 2) tabla de fotos (fallas y control)
-mysql -u root -p < bd/migracion_fotos.sql
+docker exec -i sigra-db mariadb -uroot -p < bd/migracion_fotos.sql
 
 # 3) fotos.id_sala + sus índices y FK
+docker exec -i sigra-db mariadb -uroot -p < bd/migracion_fotos_sala.sql
+```
+
+Si la base es local (no Docker), los mismos tres scripts con el cliente
+`mysql`:
+
+```bash
+mysql -u root -p < bd/D-03_estructura.sql
+mysql -u root -p < bd/migracion_fotos.sql
 mysql -u root -p < bd/migracion_fotos_sala.sql
 ```
 
@@ -33,13 +46,49 @@ Antes de levantar la app, copiar la plantilla y completar los datos:
 
 ```bash
 cp config/db.example.php config/db.php
-# editar config/db.php y reemplazar los COMPLETAR_* (o definir las
-# variables MYSQL_* en .env / docker-compose.yml)
 ```
 
 `config/db.php` está ignorado por git; `config/db.example.php` es la
-plantilla versionada. Con docker-compose y el `.env` ya cargado,
-alcanza con copiar el archivo sin editarlo.
+plantilla versionada. **Nunca subas `config/db.php` al repositorio**:
+contiene la contraseña de la base.
+
+Los valores salen de las variables de entorno `MYSQL_*` (que define el
+`.env` y que `docker-compose.yml` le pasa tanto al servicio de la base
+como al servicio web). Con Docker, **alcanza con copiar el archivo sin
+editarlo**: `docker-compose.yml` define `MYSQL_HOST: db` para el web, y
+`config/db.php` lo lee con `getenv()`.
+
+Sin Docker, o si las variables no están definidas, hay que editar
+`config/db.php` a mano y reemplazar los `COMPLETAR_*` por los valores
+reales.
+
+### Permisos de la carpeta de subidas
+
+Las fotos se guardan en `public/uploads/fotos/`, que **no está versionada**
+(solo se versiona su `index.html`). En una instalación nueva hay que
+dejarla escribible por el servidor web: Apache corre como `www-data`
+dentro del contenedor y sin esto la app responde *"No se pudo guardar la
+foto en el servidor"*.
+
+El comando exacto (dueño = el usuario de la instalación, grupo `www-data`,
+modo `2775` — el `2` activa setgid para que los archivos nuevos hereden
+el grupo):
+
+```bash
+sudo chown -R <usuario>:www-data public/uploads/fotos
+sudo chmod 2775 public/uploads/fotos
+```
+
+> `chmod 2775` **necesita `sudo`**: sólo root puede activar el bit
+> setgid en una carpeta de un grupo al que el usuario no pertenece. El
+> dueño sigue siendo `<usuario>`, no root.
+
+O, lo mismo, con el script que viene en el repo (solo toca esa carpeta y
+pide confirmación antes de aplicar):
+
+```bash
+sudo scripts/preparar-instalacion.sh
+```
 
 ### Instalar en otra base (por ejemplo una de pruebas)
 
@@ -123,8 +172,8 @@ nacen en `sin_eval`, `sin_eval` es el estado por defecto de la tabla).
 
 ```bash
 # tablas esperadas: fotos, historial_tickets, pcs, salas, sesiones_docente, tickets, usuarios
-mysql -u root -p -D sigra_etsr -e "SHOW TABLES;"
+docker exec -i sigra-db mariadb -uroot -p -D sigra_etsr -e "SHOW TABLES;"
 
 # estructura de una tabla
-mysql -u root -p -D sigra_etsr -e "SHOW CREATE TABLE pcs\G"
+docker exec -i sigra-db mariadb -uroot -p -D sigra_etsr -e "SHOW CREATE TABLE pcs\G"
 ```
