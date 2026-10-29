@@ -86,7 +86,7 @@ function ui_head($opciones) {
     <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
     <title>SIGRA-ETSR · <?php echo htmlspecialchars($titulo_vista); ?></title>
     <link rel="stylesheet" href="/css/theme.css?v=7">
-    <link rel="stylesheet" href="/css/estilos.css?v=8">
+    <link rel="stylesheet" href="/css/estilos.css?v=9">
     <link rel="stylesheet" href="/css/mapa.css?v=10">
     <link rel="stylesheet" href="/css/shell.css?v=4"><!-- topbar + tabbar + usermenu + roomgrid + animaciones -->
 </head>

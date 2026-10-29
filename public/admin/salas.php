@@ -249,6 +249,26 @@ if ($accion === 'editar_pc') {
                     // Convert to integer for database
                     $filaValue = intval($fila);
                     $posicionValue = intval($posicion);
+
+                    // Mismos límites que el editor de plano (3 filas × 8 lugares):
+                    // fuera de ese rango la PC no aparece en el mapa del docente.
+                    if (!in_array($filaValue, [1, 2, 3], true)) {
+                        $error = "La fila debe ser 1, 2 o 3";
+                    } elseif ($posicionValue < 1 || $posicionValue > 8) {
+                        $error = "La posición debe estar entre 1 y 8";
+                    } else {
+                        // El lugar no puede estar ocupado por otra PC de la sala.
+                        $q_lugar = $conexion->prepare(
+                            "SELECT id_pc FROM pcs
+                             WHERE id_sala = ? AND tipo_equipo = 'PC' AND fila = ? AND posicion = ? AND id_pc != ?"
+                        );
+                        $q_lugar->bind_param("iiii", $id_sala, $filaValue, $posicionValue, $id_pc);
+                        $q_lugar->execute();
+                        if ($q_lugar->get_result()->fetch_assoc()) {
+                            $error = "Ese lugar (fila $filaValue, posición $posicionValue) ya está ocupado por otra PC";
+                        }
+                        $q_lugar->close();
+                    }
                 }
             } else {
                 // Para non-PCs, usar 0 como valores por defecto
@@ -385,7 +405,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $accion === 'crear_sala') {
         $ins_tv->execute();
     }
 
-    header("Location: salas.php?msg=" . urlencode("Sala creada correctamente"));
+    // La sala nueva no tiene PCs: se pasa directo al editor de plano,
+    // que es la forma de cargarlas.
+    header("Location: plano-editor.php?id_sala=" . $id_sala_nueva . "&msg=" . urlencode(
+        "Sala creada. Tocá los lugares libres del plano para agregar sus PCs."
+    ));
     exit();
 }
 
@@ -438,89 +462,6 @@ if ($accion === 'reactivar_sala' && isset($_GET['id'])) {
     exit();
 }
 
-// ============================================================
-// ACCIÓN: crear_pc
-// Alta de una PC nueva dentro de una sala existente.
-// ============================================================
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $accion === 'crear_pc') {
-
-    $id_sala     = trim($_POST['id_sala'] ?? '');
-    $etiqueta    = trim($_POST['etiqueta'] ?? '');
-    $tipo_equipo = trim($_POST['tipo_equipo'] ?? '');
-
-    // Default values for fila and posicion
-    $fila = 0;
-    $posicion = 0;
-
-    // Validar fila y posicion solo si el tipo es PC
-    if ($tipo_equipo === 'PC') {
-        $fila = trim($_POST['fila'] ?? '');
-        $posicion = trim($_POST['posicion'] ?? '');
-        if ($fila === '' || $posicion === '') {
-            header("Location: salas.php?error=" . urlencode("Para PCs, completá fila y posición"));
-            exit();
-        }
-        // Convert to integer for database
-        $fila = intval($fila);
-        $posicion = intval($posicion);
-    }
-
-    if ($id_sala === '' || $etiqueta === '' || $tipo_equipo === '') {
-        header("Location: salas.php?error=" . urlencode("Completá todos los campos del equipo"));
-        exit();
-    }
-
-    // Validar que el tipo de equipo sea válido
-    if (!in_array($tipo_equipo, ['PC', 'Switch', 'TV', 'Proyector'])) {
-        header("Location: salas.php?error=" . urlencode("Tipo de equipo no válido"));
-        exit();
-    }
-
-    // Validar límite de Switches y TVs por sala (solo 1 de cada tipo permitido)
-    if ($tipo_equipo === 'Switch') {
-        $check = $conexion->prepare("SELECT COUNT(*) AS total FROM pcs WHERE id_sala = ? AND tipo_equipo = 'Switch'");
-        $check->bind_param("i", $id_sala);
-        $check->execute();
-        $result = $check->get_result()->fetch_assoc();
-        if ($result['total'] > 0) {
-            header("Location: salas.php?error=" . urlencode("La sala ya cuenta con un Switch asignado"));
-            exit();
-        }
-    } elseif ($tipo_equipo === 'TV' || $tipo_equipo === 'Proyector') {
-        $check = $conexion->prepare("SELECT COUNT(*) AS total FROM pcs WHERE id_sala = ? AND tipo_equipo IN ('TV', 'Proyector')");
-        $check->bind_param("i", $id_sala);
-        $check->execute();
-        $result = $check->get_result()->fetch_assoc();
-        if ($result['total'] > 0) {
-            header("Location: salas.php?error=" . urlencode("La sala ya cuenta con un TV o Proyector asignado"));
-            exit();
-        }
-    }
-
-    // Use try-catch for better error handling
-    try {
-        $insertar = $conexion->prepare(
-            "INSERT INTO pcs (id_sala, etiqueta, tipo_equipo, fila, posicion, estado_actual)
-             VALUES (?, ?, ?, ?, ?, ?)"
-        );
-        if (!$insertar) {
-            throw new Exception("Error en la preparación de la consulta: " . $conexion->error);
-        }
-
-        $estado_actual_default = 'sin_eval';
-        $insertar->bind_param("issiis", $id_sala, $etiqueta, $tipo_equipo, $fila, $posicion, $estado_actual_default);
-        if (!$insertar->execute()) {
-            throw new Exception("Error en la ejecución de la consulta: " . $insertar->error);
-        }
-
-        header("Location: salas.php?msg=" . urlencode("Equipo agregado correctamente"));
-        exit();
-    } catch (Exception $e) {
-        header("Location: salas.php?error=" . urlencode($e->getMessage()));
-        exit();
-    }
-}
-
 // ── Mensajes de redirección anterior ──
 $mensaje_ok    = $_GET['msg'] ?? '';
 $mensaje_error = $_GET['error'] ?? '';
@@ -535,10 +476,10 @@ $lista_salas = $conexion->query(
      ORDER BY s.nombre_sala ASC"
 );
 
-// ── Salas activas, para los desplegables de sala (alta y edición de equipos) ──
-// fetch_all() en vez de un resultado "vivo" porque este mismo listado se
-// recorre dos veces en la página (form de editar equipo y form de agregar PC).
-$salas_para_pc = $conexion->query("SELECT id_sala, nombre_sala FROM salas WHERE activa = 1")->fetch_all(MYSQLI_ASSOC);
+// ── Salas activas, para los desplegables de sala ──
+// (editar equipo y acceso rápido al editor de plano). fetch_all() en vez
+// de un resultado "vivo" porque el listado se recorre más de una vez.
+$salas_para_pc = $conexion->query("SELECT id_sala, nombre_sala FROM salas WHERE activa = 1 ORDER BY nombre_sala ASC")->fetch_all(MYSQLI_ASSOC);
 
 // ── Todos los dispositivos (PC, Switch, TV, Proyector) de todas las salas ──
 $lista_dispositivos = $conexion->query(
@@ -573,6 +514,30 @@ ui_head([
             <div class="mensaje-error"><?php echo htmlspecialchars($mensaje_error); ?></div>
         <?php endif; ?>
 
+        <!-- ── Acceso principal: agregar PCs en el plano ── -->
+        <section class="cta-plano" aria-labelledby="cta-plano-titulo">
+            <div class="cta-plano__texto">
+                <h2 id="cta-plano-titulo">Agregar PCs a una sala</h2>
+                <p>
+                    Abrí el plano de la sala, tocá los lugares libres, escribí el código
+                    de cada equipo y guardá todo junto. También podés seleccionar una fila
+                    entera o pegar una lista de códigos.
+                </p>
+            </div>
+            <form class="cta-plano__form" method="GET" action="plano-editor.php">
+                <label for="cta-sala">Sala</label>
+                <select id="cta-sala" name="id_sala" required>
+                    <option value="">-- Elegí una sala --</option>
+                    <?php foreach ($salas_para_pc as $s): ?>
+                        <option value="<?php echo (int)$s['id_sala']; ?>">
+                            <?php echo htmlspecialchars($s['nombre_sala']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="submit" class="btn-primary cta-plano__boton">Abrir editor de plano</button>
+            </form>
+        </section>
+
         <h2>Salas existentes</h2>
         <table>
             <tr>
@@ -594,10 +559,10 @@ ui_head([
                     </td>
                     <td>
                         <?php if ($s['activa']): ?>
-                            <a href="salas.php?accion=editar_sala&id=<?php echo $s['id_sala']; ?>">Editar</a> |
-                            <a href="plano-editor.php?id_sala=<?php echo $s['id_sala']; ?>">
+                            <a class="btn-plano" href="plano-editor.php?id_sala=<?php echo $s['id_sala']; ?>">
                                 Agregar PCs en el plano
-                            </a> |
+                            </a>
+                            <a href="salas.php?accion=editar_sala&id=<?php echo $s['id_sala']; ?>">Editar</a> |
                             <a href="salas.php?accion=desactivar_sala&id=<?php echo $s['id_sala']; ?>"
                                onclick="return confirm('¿Desactivar la sala <?php echo htmlspecialchars($s['nombre_sala']); ?>?');">
                                 Desactivar
@@ -666,6 +631,11 @@ ui_head([
         </form>
 
         <h2 style="margin-top: 25px;">Dispositivos existentes</h2>
+        <p class="nota-plano">
+            Para agregar PCs usá el <strong>editor de plano</strong> (botón
+            «Agregar PCs en el plano» de cada sala). Desde acá solo se editan o
+            se eliminan los equipos que ya existen.
+        </p>
         <table>
             <tr>
                 <th>Sala</th>
@@ -743,56 +713,6 @@ ui_head([
         </form>
         <?php endif; ?>
 
-        <h2 style="margin-top: 25px;">Agregar PC a la sala</h2>
-        <form method="POST" action="salas.php">
-            <input type="hidden" name="accion" value="crear_pc">
-            <input type="hidden" name="tipo_equipo" value="PC">
-
-            <label for="id_sala">Sala</label>
-            <select id="id_sala" name="id_sala">
-                <option value="">-- Elegí una sala --</option>
-                <?php foreach ($salas_para_pc as $s): ?>
-                    <option value="<?php echo $s['id_sala']; ?>">
-                        <?php echo htmlspecialchars($s['nombre_sala']); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-
-            <label for="etiqueta">Etiqueta del equipo</label>
-            <input type="text" id="etiqueta" name="etiqueta" placeholder="Ej: PC-305-01">
-
-            <div id="fila-posicion-fields">
-                <label for="fila">Fila (posición lógica en el mapa)</label>
-                <input type="text" id="fila" name="fila" placeholder="Ej: 1" required>
-
-                <label for="posicion">Posición dentro de la fila</label>
-                <input type="text" id="posicion" name="posicion" placeholder="Ej: 1" required>
-            </div>
-
-            <button type="submit" id="submit-button">Agregar PC</button>
-        </form>
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const salaSelect = document.getElementById('id_sala');
-            const filaPosicionFields = document.getElementById('fila-posicion-fields');
-            const submitButton = document.getElementById('submit-button');
-
-            function updateForm() {
-                filaPosicionFields.style.display = 'block';
-                // Make fields required
-                filaPosicionFields.querySelectorAll('input').forEach(input => {
-                    input.required = true;
-                });
-                submitButton.textContent = 'Agregar PC';
-            }
-
-            // Initialize
-            updateForm();
-
-            // Update on change (though not really needed now since we only have PC option)
-            salaSelect.addEventListener('change', updateForm);
-        });
-        </script>
     </div>
 
 <?php ui_foot(); ?>

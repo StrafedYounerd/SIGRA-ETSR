@@ -103,6 +103,9 @@ ui_head([
             <div class="editor-plano__sala">
                 <label for="sel-sala">Sala</label>
                 <select id="sel-sala">
+                    <?php if (!$sala): ?>
+                        <option value="" selected disabled>-- Elegí una sala --</option>
+                    <?php endif; ?>
                     <?php foreach ($salas as $s): ?>
                         <option value="<?php echo (int)$s['id_sala']; ?>"
                             <?php echo ($sala && (int)$s['id_sala'] === $id_sala) ? 'selected' : ''; ?>>

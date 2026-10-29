@@ -223,6 +223,83 @@ hr {
     margin: 22px 0;
 }
 
+/* ── Salas: acceso principal al editor de plano ──
+   Es la forma de agregar PCs, por eso va arriba de la pantalla de
+   salas, con el botón principal (aqua + texto navy). */
+.cta-plano {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px 28px;
+    background-color: var(--aqua-50);
+    border: 1px solid var(--aqua-200);
+    border-left: 5px solid var(--aqua);
+    border-radius: var(--radio);
+    padding: 18px 20px;
+    margin-bottom: 26px;
+}
+
+.cta-plano__texto {
+    flex: 1 1 280px;
+}
+
+.cta-plano__texto h2 {
+    margin-bottom: 6px;
+}
+
+.cta-plano__texto p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-texto);
+}
+
+.cta-plano__form {
+    flex: 0 1 300px;
+    min-width: 220px;
+}
+
+.cta-plano__form label {
+    margin-top: 0;
+}
+
+.cta-plano__boton {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px 18px;
+    font-size: 15px;
+}
+
+/* Botón del editor de plano dentro de la fila de cada sala */
+td a.btn-plano {
+    display: inline-block;
+    background-color: var(--aqua);
+    color: var(--navy);
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 10px;
+    margin: 0 8px 4px 0;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+td a.btn-plano:hover {
+    background-color: var(--aqua-hover);
+    text-decoration: none;
+}
+
+td a.btn-plano:focus-visible {
+    outline: 3px solid var(--navy);
+    outline-offset: 2px;
+}
+
+.nota-plano {
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: var(--color-texto-suave);
+}
+
 /* ── Responsive: pantallas chicas ── */
 @media (max-width: 720px) {
     body {
