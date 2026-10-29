@@ -259,6 +259,61 @@ let fotosEnProceso = 0;
 // envío pero NO deshabilita el botón (la foto es opcional).
 let comprimiendoFoto = false;
 
+// ── A. Selector de archivos ABIERTO ──
+// Mientras el usuario está eligiendo el archivo en el diálogo del
+// sistema, el polling NO puede redibujar el cajón: al redibujarlo se
+// recrea el <input type="file"> y el 'change' del archivo elegido
+// queda sobre un elemento desconectado del DOM (la foto se sube pero
+// el docente nunca ve la vista previa).
+//
+// La bandera se libera en: 'change' del input, 'cancel' del input,
+// el regreso del foco a la ventana (1 s de gracia, solo si no llegó un
+// 'change') y un tope de seguridad de 2 minutos. Nunca queda trabada.
+let selectorAbierto = false;
+let selectorTope = null;          // temporizador de seguridad (2 minutos)
+let selectorFocoPerdido = false;  // ¿el diálogo del sistema nos quitó el foco?
+let selectorToken = 0;            // invalida temporizadores viejos
+
+const SELECTOR_TOPE_MS = 120000;  // 2 minutos
+const SELECTOR_ESPERA_MS = 1000;  // gracia al volver el foco a la ventana
+
+function abrirSelector() {
+    selectorAbierto = true;
+    selectorFocoPerdido = false;
+    selectorToken++;
+    const token = selectorToken;
+    clearTimeout(selectorTope);
+    selectorTope = setTimeout(() => {
+        // Si en estos 2 minutos no llegó ningún 'change'/'cancel',
+        // liberamos la bandera igual: no puede quedar trabada.
+        if (token === selectorToken) cerrarSelector();
+    }, SELECTOR_TOPE_MS);
+}
+
+function cerrarSelector() {
+    selectorAbierto = false;
+    selectorFocoPerdido = false;
+    selectorToken++;               // invalida los temporizadores pendientes
+    clearTimeout(selectorTope);
+    selectorTope = null;
+}
+
+// El diálogo del sistema puede habernos quitado el foco: al volver a la
+// ventana esperamos 1 s y, si en ese tiempo no llegó un 'change', damos
+// el selector por cerrado (el docente canceló la elección).
+// Si el 'change' llega tarde (diálogo lento), el 'change' vuelve a abrir
+// la bandera: el input sigue conectado y el polling no lo destruye.
+window.addEventListener("blur", () => {
+    if (selectorAbierto) selectorFocoPerdido = true;
+});
+window.addEventListener("focus", () => {
+    if (!selectorAbierto || !selectorFocoPerdido) return;
+    const token = selectorToken;
+    setTimeout(() => {
+        if (token === selectorToken && selectorAbierto) cerrarSelector();
+    }, SELECTOR_ESPERA_MS);
+});
+
 function pesoLegible(bytes) {
     return bytes >= 1048576 ? (bytes / 1048576).toFixed(1).replace(".", ",") + " MB"
                             : Math.max(1, Math.round(bytes / 1024)) + " KB";
@@ -272,27 +327,69 @@ async function prepararFoto(archivo) {
     if (/^image\/hei[cf]/.test(archivo.type) || /\.hei[cf]$/i.test(archivo.name || ""))
         throw new Error("Formato no permitido (HEIC). Usá JPG o PNG.");
     if (archivo.type === "image/gif" || archivo.size <= UMBRAL_SIN_TOCAR) return archivo;
+
+    // Camino principal: createImageBitmap (rápido y respeta la rotación
+    // EXIF). Camino alternativo: <img> + URL.createObjectURL, para los
+    // navegadores que no lo implementan.
+    // Ambos devuelven { ancho, alto, fuente, cerrar }.
+    let img = null;
     try {
-        // imageOrientation: respeta la rotación EXIF (fotos de celular "de costado").
         const bmp = await createImageBitmap(archivo, { imageOrientation: "from-image" });
-        const escala = Math.min(1, LADO_MAX_FOTO / Math.max(bmp.width, bmp.height));
-        const w = Math.round(bmp.width * escala), h = Math.round(bmp.height * escala);
-        const lienzo = document.createElement("canvas");
-        lienzo.width = w; lienzo.height = h;
-        const ctx = lienzo.getContext("2d");
-        ctx.fillStyle = "#fff";            // PNG con transparencia -> fondo blanco
-        ctx.fillRect(0, 0, w, h);
-        ctx.drawImage(bmp, 0, 0, w, h);
-        bmp.close();
-        const blob = await new Promise(r => lienzo.toBlob(r, "image/jpeg", CALIDAD_FOTO));
-        if (!blob || blob.size >= archivo.size) return archivo;
-        const base = (archivo.name || "foto").replace(/\.[^.]+$/, "");
-        return new File([blob], base + ".jpg", { type: "image/jpeg" });
+        img = {
+            ancho: bmp.width,
+            alto: bmp.height,
+            fuente: bmp,
+            cerrar: () => bmp.close()
+        };
     } catch (e) {
-        // El navegador no pudo decodificarla (p. ej. HEIC): se sube tal cual
-        // y el servidor decide con un mensaje claro.
-        return archivo;
+        try {
+            img = await decodificarConImg(archivo);
+        } catch (e2) {
+            // Ni createImageBitmap ni <img> pudieron decodificar la foto:
+            // no se puede reducir, así que se avisa en el selector y no se
+            // sube nada. El catch del 'change' muestra el mensaje y
+            // limpiar() deja el botón utilizable.
+            throw new Error("No se pudo reducir la foto; elegí una más chica o en formato JPG/PNG.");
+        }
     }
+
+    const escala = Math.min(1, LADO_MAX_FOTO / Math.max(img.ancho, img.alto));
+    const w = Math.round(img.ancho * escala), h = Math.round(img.alto * escala);
+    const lienzo = document.createElement("canvas");
+    lienzo.width = w; lienzo.height = h;
+    const ctx = lienzo.getContext("2d");
+    ctx.fillStyle = "#fff";            // PNG con transparencia -> fondo blanco
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img.fuente, 0, 0, w, h);
+    if (typeof img.cerrar === "function") img.cerrar();
+    const blob = await new Promise(r => lienzo.toBlob(r, "image/jpeg", CALIDAD_FOTO));
+    if (!blob || blob.size >= archivo.size) return archivo;
+    const base = (archivo.name || "foto").replace(/\.[^.]+$/, "");
+    return new File([blob], base + ".jpg", { type: "image/jpeg" });
+}
+
+// Camino alternativo de decodificación: <img> + URL.createObjectURL.
+// Se usa cuando createImageBitmap no existe o falla. La URL temporal
+// se revoca siempre, tanto si carga como si falla.
+function decodificarConImg(archivo) {
+    return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(archivo);
+        const el = new Image();
+        el.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve({
+                ancho: el.naturalWidth || el.width,
+                alto: el.naturalHeight || el.height,
+                fuente: el,
+                cerrar: () => {}
+            });
+        };
+        el.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("No se pudo decodificar la imagen"));
+        };
+        el.src = url;
+    });
 }
 
 function htmlSelectorFoto(idInput, idPreview, etiqueta) {
@@ -338,6 +435,7 @@ function conectarSelectorFoto(idInput, idPreview, alCambiar) {
 
     input.addEventListener("change", async () => {
         mostrarError("");
+        cerrarSelector();   // A: el archivo ya está elegido
         const original = input.files && input.files[0];
         if (!original) { limpiar(); return; }
         previa.hidden = false;
@@ -349,7 +447,14 @@ function conectarSelectorFoto(idInput, idPreview, alCambiar) {
             const limite = DATOS.limite_foto || 2097152;
             if (lista.size > limite) {
                 limpiar();
-                mostrarError(`La foto pesa ${pesoLegible(lista.size)} y el máximo es ${pesoLegible(limite)}.`);
+                // Si la foto volvió sin comprimir (el navegador no pudo
+                // reducirla), el mensaje dice qué hacer; si venía
+                // comprimida y aun así no entra, es el límite del servidor.
+                if (lista === original) {
+                    mostrarError("No se pudo reducir la foto; elegí una más chica o en formato JPG/PNG.");
+                } else {
+                    mostrarError(`La foto pesa ${pesoLegible(lista.size)} y el máximo es ${pesoLegible(limite)}.`);
+                }
                 return;
             }
             FOTOS_LISTAS.set(idInput, lista);
@@ -368,6 +473,13 @@ function conectarSelectorFoto(idInput, idPreview, alCambiar) {
         mostrarError("");
         limpiar();
     });
+    // A: el usuario canceló el diálogo del sistema.
+    input.addEventListener("cancel", () => cerrarSelector());
+
+    // A: el clic en el label abre el diálogo del sistema. Lo marcamos
+    // para que el polling no redibuje el cajón mientras está abierto.
+    const etiqueta = document.querySelector(`label[for="${idInput}"]`);
+    if (etiqueta) etiqueta.addEventListener("click", abrirSelector);
     return input;
 }
 
@@ -515,6 +627,38 @@ function formatoFecha(f) {
 // ENVÍOS (fetch) — mismos endpoints y campos que antes
 // ============================================================
 
+// B. Lee la respuesta del servidor distinguiendo los casos que antes
+// terminaban todos como "sin conexión":
+//   · la sesión venció → el servidor redirigió a /login.php;
+//   · el cuerpo no es JSON → un warning de PHP se coló delante del JSON
+//     (típico cuando el POST supera post_max_size) o el servidor falló;
+//   · un fallo real de red → lo maneja el .catch() de fetch.
+// Devuelve { ok: true, datos } o { ok: false, mensaje }.
+async function leerRespuesta(r) {
+    // Sesión vencida: PHP redirige a /login.php y el fetch sigue el 302.
+    const urlFinal = r.url || "";
+    if (r.redirected || /\/login\.php/.test(urlFinal)) {
+        return {
+            ok: false,
+            mensaje: "Tu sesión venció. Volvé a iniciar sesión (los datos que escribiste se conservan)."
+        };
+    }
+    let texto = "";
+    try { texto = await r.text(); } catch (e) { texto = ""; }
+    let datos = null;
+    try { datos = JSON.parse(texto); } catch (e) { datos = null; }
+    if (datos && typeof datos === "object") return { ok: true, datos };
+    // El cuerpo no es JSON: el PHP imprimió un warning antes de la
+    // respuesta (por ejemplo, POST más grande que post_max_size).
+    if (/exceeds the limit/i.test(texto)) {
+        return { ok: false, mensaje: "La foto es demasiado grande para el servidor" };
+    }
+    if (r.status >= 500) {
+        return { ok: false, mensaje: "El servidor tuvo un error; probá de nuevo" };
+    }
+    return { ok: false, mensaje: "El servidor devolvió una respuesta inesperada. Probá de nuevo." };
+}
+
 // Reporte de falla: POST a reportar-falla.php con id_pc, tipo_falla,
 // detalle_texto y (opcional) foto. En éxito actualiza el plano en el
 // momento (sin recargar); si algo falla, recarga como fallback.
@@ -555,8 +699,16 @@ function enviarReporte() {
     boton.textContent = fotoLista ? "Enviando con foto…" : "Enviando…";
 
     fetch("reportar-falla.php", { method: "POST", body: datos })
-        .then(r => r.json())
-        .then(resp => {
+        .then(leerRespuesta)
+        .then(r => {
+            if (!r.ok) {
+                error.textContent = r.mensaje;
+                error.hidden = false;
+                boton.disabled = false;
+                boton.textContent = "Reportar falla";
+                return;
+            }
+            const resp = r.datos;
             if (resp.exito) {
                 toast(resp.mensaje || "Falla reportada.");
                 FOTOS_LISTAS.delete("campo-foto");   // limpiar solo tras éxito
@@ -589,8 +741,9 @@ function enviarReporte() {
             }
         })
         .catch(err => {
-            // Antes se recargaba la página y se perdía lo escrito y la foto.
-            // Ahora se avisa y se conserva el formulario para reintentar.
+            // Solo un fallo real de red llega acá: el servidor no
+            // respondió. Antes se recargaba la página y se perdía lo
+            // escrito y la foto; ahora se avisa y se conserva el formulario.
             console.error("Error al enviar el reporte:", err);
             error.textContent = "No hay conexión con el servidor. Probá de nuevo.";
             error.hidden = false;
@@ -612,8 +765,15 @@ function enviarFotoControl(idPC, idInput) {
     boton.textContent = "Guardando…";
 
     fetch("guardar-foto-control.php", { method: "POST", body: datos })
-        .then(r => r.json())
-        .then(resp => {
+        .then(leerRespuesta)
+        .then(r => {
+            if (!r.ok) {
+                toast(r.mensaje);
+                boton.disabled = false;
+                boton.textContent = "Guardar foto";
+                return;
+            }
+            const resp = r.datos;
             if (resp.exito) {
                 toast(resp.mensaje || "Foto guardada.");
                 // Agregar al listado local (la sala completa no tiene etiqueta)
@@ -630,6 +790,7 @@ function enviarFotoControl(idPC, idInput) {
             }
         })
         .catch(err => {
+            // Solo un fallo real de red.
             console.error("Error al guardar la foto:", err);
             toast("Error de conexión al guardar la foto.");
             boton.disabled = false;
@@ -652,11 +813,15 @@ function iniciarPolling() {
 function cajonEnUso() {
     // ¿Hay algo en curso que un redibujado destruiría? No depende del foco:
     // foto elegida o comprimiéndose, tipo de falla elegido o texto escrito.
+    // A: también mientras el selector de archivos del sistema está abierto
+    // (si el polling redibuja el cajón, el <input> se recrea y el 'change'
+    // del archivo elegido cae sobre un elemento desconectado del DOM).
     const tipo = $("#campo-tipo-falla");
     const detalle = $("#campo-detalle");
     const fotoElegida = [...document.querySelectorAll("#cajon input.input-foto")]
         .some(i => i.files && i.files.length > 0);
-    return FOTOS_LISTAS.size > 0
+    return selectorAbierto
+        || FOTOS_LISTAS.size > 0
         || fotosEnProceso > 0
         || fotoElegida
         || (tipo && !!tipo.value)
