@@ -204,6 +204,17 @@
 }
 .editor-plano__movil input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--aqua); }
 
+/* Modo eliminar: equipos marcados para borrar */
+.mesa-a-eliminar {
+    stroke: #dc3545 !important;
+    stroke-width: 3 !important;
+    stroke-dasharray: 6 4 !important;
+}
+.mesa-a-eliminar text {
+    fill: #dc3545 !important;
+    text-decoration: line-through;
+}
+
 @media (max-width: 720px) {
     .editor-plano__cuerpo { grid-template-columns: minmax(0, 1fr); }
     .editor-plano__panel { position: static; }
