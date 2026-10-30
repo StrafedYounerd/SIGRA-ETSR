@@ -402,6 +402,14 @@ function dibujarMesaElegida(c, etiqueta, clave) {
     txt.className = "etiqueta";
     txt.textContent = etiquetaCorta(etiqueta);
     btn.appendChild(txt);
+    // Listener directo: click en un equipo ya elegido → editar su código
+    btn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const f = Number(btn.dataset.fila);
+        const p = Number(btn.dataset.posicion);
+        activarLugar(f, p);
+    });
     fo.appendChild(btn);
 
     if (conError) {
@@ -429,6 +437,12 @@ function dibujarLugarLibre(c, fila, posicion) {
     txt.className = "etiqueta";
     txt.textContent = `${fila}.${posicion}`;
     btn.appendChild(txt);
+    // Listener directo: el click en el botón del lugar libre abre el diálogo
+    btn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        activarLugar(Number(fila), Number(posicion));
+    });
     fo.appendChild(btn);
     return fo;
 }
