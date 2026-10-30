@@ -93,7 +93,7 @@ function ui_head($opciones) {
 <body class="cuerpo-app">
 
 <header class="topbar">
-    <a class="brand" href="/">
+    <a class="brand" href="https://accessnet.sigra-etsr.online/" target="_blank" rel="noopener">
         <img src="/img/logo-accessnet.png" alt="Logo de AccessNet">
         <span>SIGRA-ETSR</span>
     </a>

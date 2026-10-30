@@ -359,6 +359,42 @@ function dibujarMesaOcupada(c, equipo) {
             // Opcional: tachar el texto
             const textEl = g.querySelector("text");
             if (textEl) textEl.style.textDecoration = "line-through";
+        } else {
+            // Agregar indicador visual "clickeable para eliminar" en modo eliminar
+            const tam = tamanoMesa(c.o);
+            // Pequeño círculo rojo con X en la esquina superior derecha de la mesa
+            const indicador = svgEl("g", { class: "indicador-eliminar" });
+            const radioIndicador = 10;
+            const offsetX = c.o === "izq" ? tam.w - radioIndicador - 4 : (c.o === "der" ? 4 : tam.w / 2);
+            const offsetY = radioIndicador + 4;
+            // Fondo rojo circular
+            indicador.appendChild(svgEl("circle", {
+                cx: c.x + offsetX,
+                cy: c.y + offsetY,
+                r: radioIndicador,
+                fill: "#dc3545",
+            }));
+            // X blanca
+            const tamX = 8;
+            indicador.appendChild(svgEl("line", {
+                x1: c.x + offsetX - tamX/2,
+                y1: c.y + offsetY - tamX/2,
+                x2: c.x + offsetX + tamX/2,
+                y2: c.y + offsetY + tamX/2,
+                stroke: "#fff",
+                "stroke-width": 2,
+                "stroke-linecap": "round",
+            }));
+            indicador.appendChild(svgEl("line", {
+                x1: c.x + offsetX + tamX/2,
+                y1: c.y + offsetY - tamX/2,
+                x2: c.x + offsetX - tamX/2,
+                y2: c.y + offsetY + tamX/2,
+                stroke: "#fff",
+                "stroke-width": 2,
+                "stroke-linecap": "round",
+            }));
+            g.appendChild(indicador);
         }
     }
     const tam = tamanoMesa(c.o);
@@ -1221,16 +1257,54 @@ function conectarEventos() {
     // Modos Agregar / Eliminar
     const btnModoAgregar = el("btn-modo-agregar");
     const btnModoEliminar = el("btn-modo-eliminar");
+    const bannerEliminar = el("banner-eliminar");
+    const btnCancelarEliminarModo = el("btn-cancelar-eliminar-modo");
+
+    function actualizarUIModoEliminar() {
+        // La clase en el contenedor habilita los estilos de hover/indicador
+        // de los equipos (css/editor-plano.css → .modo-eliminar ...).
+        const raiz = document.querySelector(".editor-plano");
+        if (raiz) raiz.classList.toggle("modo-eliminar", modoEliminar);
+
+        if (modoEliminar) {
+            btnModoEliminar.classList.add("is-active");
+            btnModoEliminar.setAttribute("aria-pressed", "true");
+            btnModoAgregar.classList.remove("is-active");
+            btnModoAgregar.setAttribute("aria-pressed", "false");
+            if (bannerEliminar) bannerEliminar.hidden = false;
+        } else {
+            btnModoEliminar.classList.remove("is-active");
+            btnModoEliminar.setAttribute("aria-pressed", "false");
+            btnModoAgregar.classList.add("is-active");
+            btnModoAgregar.setAttribute("aria-pressed", "true");
+            if (bannerEliminar) bannerEliminar.hidden = true;
+        }
+    }
+
     if (btnModoAgregar && btnModoEliminar) {
         btnModoAgregar.addEventListener("click", () => {
             modoEliminar = false;
+            actualizarUIModoEliminar();
             refrescar();
         });
         btnModoEliminar.addEventListener("click", () => {
             modoEliminar = true;
+            actualizarUIModoEliminar();
             refrescar();
         });
     }
+
+    // Cancelar modo eliminar desde el banner
+    if (btnCancelarEliminarModo) {
+        btnCancelarEliminarModo.addEventListener("click", () => {
+            modoEliminar = false;
+            actualizarUIModoEliminar();
+            refrescar();
+        });
+    }
+
+    // Inicializar estado de botones
+    actualizarUIModoEliminar();
 
     // "+ agregar lugar": agrega un lugar en la fila seleccionada.
     const btnAgregar = el("btn-agregar");

@@ -190,6 +190,75 @@
 }
 .editor-plano__dlg-acciones { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 
+/* ── Modo Eliminar: estilos de UI ── */
+.btn-editor--danger {
+    background: #fff0f0;
+    border-color: #dc3545;
+    color: #dc3545;
+}
+.btn-editor--danger:hover:not(:disabled) {
+    background: #dc3545;
+    color: #fff;
+}
+.btn-editor.is-active {
+    background: var(--aqua);
+    border-color: var(--aqua);
+    color: #fff;
+}
+.btn-editor.btn-editor--danger.is-active {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: #fff;
+}
+
+/* El banner se muestra/oculta con el atributo hidden del HTML.
+   OJO: esta regla es del autor y le gana a la del navegador
+   ([hidden] { display:none }), así que hay que reponer el
+   display:none a mano o el banner queda visible siempre. */
+.editor-plano__banner-eliminar[hidden] { display: none; }
+.editor-plano__banner-eliminar {
+    display: flex; flex: 1 1 100%;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    margin-top: 12px;
+    background: #fff3f3;
+    border: 2px solid #dc3545;
+    border-radius: var(--radio);
+    color: #dc3545;
+    font-weight: 600;
+    font-size: .9rem;
+    animation: banner-slide 0.3s ease-out;
+}
+.editor-plano__banner-eliminar .banner-icon { font-size: 1.2rem; }
+.editor-plano__banner-eliminar .banner-texto { flex: 1; }
+.btn-banner-cerrar {
+    background: transparent;
+    border: none;
+    color: #dc3545;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 6px;
+    line-height: 1;
+}
+.btn-banner-cerrar:hover { color: #a71e2a; }
+
+@keyframes banner-slide {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Modo eliminar: equipos marcados para borrar */
+.mesa-a-eliminar {
+    stroke: #dc3545 !important;
+    stroke-width: 3 !important;
+    stroke-dasharray: 6 4 !important;
+}
+.mesa-a-eliminar text {
+    fill: #dc3545 !important;
+    text-decoration: line-through;
+}
+
 /* ── Móvil: lista alternativa de lugares libres con checkbox ── */
 .editor-plano__movil {
     display: none; background: var(--color-superficie); border: 1px solid var(--color-borde);
@@ -203,17 +272,6 @@
     padding: 8px 2px; font-size: .88rem; cursor: pointer;
 }
 .editor-plano__movil input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--aqua); }
-
-/* Modo eliminar: equipos marcados para borrar */
-.mesa-a-eliminar {
-    stroke: #dc3545 !important;
-    stroke-width: 3 !important;
-    stroke-dasharray: 6 4 !important;
-}
-.mesa-a-eliminar text {
-    fill: #dc3545 !important;
-    text-decoration: line-through;
-}
 
 @media (max-width: 720px) {
     .editor-plano__cuerpo { grid-template-columns: minmax(0, 1fr); }

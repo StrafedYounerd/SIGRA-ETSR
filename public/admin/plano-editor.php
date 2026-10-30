@@ -96,7 +96,7 @@ ui_head([
     'activo' => 'salas',
 ]);
 ?>
-<link rel="stylesheet" href="/css/editor-plano.css?v=3">
+<link rel="stylesheet" href="/css/editor-plano.css?v=4">
     <div class="editor-plano">
 
         <!-- ── Barra superior: sala y acciones ── -->
@@ -116,9 +116,13 @@ ui_head([
                 </select>
             </div>
 
-            <div class="editor-plano__acciones">
-                <button type="button" class="btn-editor" id="btn-modo-agregar">Modo Agregar</button>
-                <button type="button" class="btn-editor" id="btn-modo-eliminar">Modo Eliminar</button>
+            <div class="editor-plano__acciones" role="group" aria-label="Modo de trabajo">
+                <button type="button" class="btn-editor is-active" id="btn-modo-agregar"
+                        aria-pressed="true">Modo Agregar</button>
+                <button type="button" class="btn-editor btn-editor--danger" id="btn-modo-eliminar"
+                        aria-pressed="false">
+                    <span class="btn-icon" aria-hidden="true">🗑️</span> Modo Eliminar
+                </button>
                 <button type="button" class="btn-editor" id="btn-fila">Seleccionar toda la fila</button>
                 <button type="button" class="btn-editor" id="btn-lista">Pegar lista</button>
                 <button type="button" class="btn-editor" id="btn-limpiar">Limpiar selección</button>
@@ -126,6 +130,13 @@ ui_head([
                 <button type="button" class="btn-editor btn-editor--principal" id="btn-guardar" disabled>
                     Guardar equipos
                 </button>
+            </div>
+            <!-- Banner de modo eliminar -->
+            <div class="editor-plano__banner-eliminar" id="banner-eliminar" role="status" hidden>
+                <span class="banner-icon" aria-hidden="true">⚠️</span>
+                <span class="banner-texto">Modo eliminar activo — tocá una PC del plano para marcarla o desmarcarla. Después guardá para confirmar.</span>
+                <button type="button" class="btn-banner-cerrar" id="btn-cancelar-eliminar-modo"
+                        aria-label="Salir del modo eliminar">✕ Salir</button>
             </div>
         </div>
 
@@ -261,7 +272,7 @@ ui_head([
 
 <?php if ($sala): ?>
 <script src="/js/layout-plano.js?v=1"></script>
-<script src="/js/plano-editor.js?v=4"></script>
+<script src="/js/plano-editor.js?v=5"></script>
 <?php endif; ?>
 
 <?php ui_foot(); ?>
