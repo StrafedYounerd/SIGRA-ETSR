@@ -45,7 +45,6 @@ const estado = {
     slots: { 1: 0, 2: 0, 3: 0 },
     extraSlots: { 1: 0, 2: 0, 3: 0 },
     errores: new Map(),
-    filaSeleccionada: 1,
 };
 
 // Lugares ya ocupados por equipos que existen en la sala: Set "fila:pos"
@@ -582,7 +581,7 @@ function activarLugar(fila, posicion) {
     abrirDialogoCodigo(fila, posicion, datos ? datos.etiqueta : "");
 }
 
-// "+ agregar lugar": extiende la fila en un lugar más.
+// "+ agregar lugar" (botones "+ fila N" en el plano): extiende la fila en un lugar más.
 function agregarLugar(fila) {
     if (estado.slots[fila] >= MAX_EDITOR) {
         marcarPista(`La fila ${fila} ya tiene el máximo de ${MAX_EDITOR} lugares.`, "error");
@@ -595,38 +594,6 @@ function agregarLugar(fila) {
     marcarPista(
         `Se agregó un lugar en la fila ${fila} (posición ${estado.slots[fila]}). Tocá el lugar para escribir el código.`
     );
-}
-
-// "Seleccionar toda la fila": elige todos los lugares libres de la
-// fila (los que no tienen equipo existente). Los códigos se escriben
-// después, uno por uno o pegando una lista.
-function seleccionarFila(fila) {
-    // La fila se completa hasta el tope: "seleccionar toda la fila"
-    // elige TODOS los lugares de la fila, los que ya existían (libres)
-    // y los nuevos hasta el máximo.
-    estado.extraSlots[fila] = MAX_EDITOR;
-    let agregados = 0;
-    for (let p = 1; p <= MAX_EDITOR; p++) {
-        const clave = claveLugar(fila, p);
-        if (OCUPADOS.has(clave)) continue;
-        if (estado.elegidos.has(clave)) continue;
-        estado.elegidos.set(clave, { fila, posicion: p, etiqueta: "" });
-        agregados++;
-    }
-    if (agregados === 0) {
-        marcarPista(`La fila ${fila} no tiene lugares libres para seleccionar.`, "error");
-    } else {
-        marcarPista(`Se seleccionaron ${agregados} lugar(es) de la fila ${fila}. Escribí los códigos o pegá una lista.`);
-    }
-    refrescar();
-}
-
-// "Limpiar selección": vacía todo lo elegido (no toca la base).
-function limpiarSeleccion() {
-    estado.elegidos.clear();
-    estado.errores.clear();
-    refrescar();
-    marcarPista("Se limpió la selección.");
 }
 
 // ============================================================
@@ -910,190 +877,6 @@ function confirmarCodigo() {
 }
 
 // ============================================================
-// DIÁLOGO: PEGAR LISTA
-// ============================================================
-// Acepta dos formatos, uno por línea:
-//   1) solo el código         → "PC-305-01"
-//   2) Fila,Posición,Código   → "2,1,PC-305-02"
-// Si viene solo el código, se usan la fila y posición libres siguientes.
-function parsearLista(texto) {
-    const lineas = String(texto || "")
-        .split("\n")
-        .map(l => l.trim())
-        .filter(l => l !== "");
-
-    const parsed = [];
-    const invalidas = [];
-
-    lineas.forEach((linea, i) => {
-        const partes = linea.split(",").map(p => p.trim());
-        if (partes.length >= 3) {
-            const f = Number(partes[0]);
-            const p = Number(partes[1]);
-            const et = normalizarEtiqueta(partes.slice(2).join(","));
-            if (!FILAS.includes(f) || !Number.isInteger(p) || p < 1 || p > MAX_EDITOR) {
-                invalidas.push(`Línea ${i + 1}: fila o posición inválida ("${linea}")`);
-                return;
-            }
-            parsed.push({ fila: f, posicion: p, etiqueta: et, linea: i + 1 });
-            return;
-        }
-        if (partes.length === 2) {
-            // "Fila,Código": se busca la posición libre siguiente.
-            const f = Number(partes[0]);
-            const et = normalizarEtiqueta(partes[1]);
-            if (!FILAS.includes(f)) {
-                invalidas.push(`Línea ${i + 1}: fila inválida ("${linea}")`);
-                return;
-            }
-            parsed.push({ fila: f, posicion: null, etiqueta: et, linea: i + 1 });
-            return;
-        }
-        const et = normalizarEtiqueta(linea);
-        if (et === "") {
-            invalidas.push(`Línea ${i + 1}: línea vacía`);
-            return;
-        }
-        parsed.push({ fila: null, posicion: null, etiqueta: et, linea: i + 1 });
-    });
-
-    return { parsed, invalidas };
-}
-
-// Confirma la lista pegada: reparte los códigos en los lugares.
-function confirmarLista() {
-    const dlg = el("dlg-lista");
-    const txt = el("txt-lista");
-    const nota = el("nota-lista-pegar");
-
-    const { parsed, invalidas } = parsearLista(txt ? txt.value : "");
-    if (parsed.length === 0) {
-        if (nota) {
-            nota.hidden = false;
-            nota.classList.add("is-error");
-            nota.textContent = "La lista está vacía o no tiene líneas válidas.";
-        }
-        return;
-    }
-
-    // Lugares ocupados en la base: no se pisan.
-    const conflictos = [];
-    const nuevos = [];
-
-    // Etiquetas ya en uso: las que existen en la sala y las que el
-    // admin ya eligió en esta tanda. Se detects antes de enviar.
-    const usadas = new Set();
-    estado.elegidos.forEach(d => {
-        if (d.etiqueta) usadas.add(d.etiqueta.toLowerCase());
-    });
-    const enEstaTanda = new Set();
-    // Lugares que se van tomando en ESTA tanda: los códigos sin fila
-    // explícita se reparten en los libres siguientes, y no pueden
-    // volver a tocar el mismo lugar.
-    const tomados = new Set();
-
-    parsed.forEach(item => {
-        let f = item.fila;
-        let p = item.posicion;
-
-        if (f === null) {
-            // Sin fila: se usa la primera fila con un lugar libre.
-            for (const ff of FILAS) {
-                const libre = primerLibre(ff, tomados);
-                if (libre !== null) { f = ff; p = libre; break; }
-            }
-            if (f === null) {
-                conflictos.push(`Línea ${item.linea}: no quedan lugares libres`);
-                return;
-            }
-        } else if (p === null) {
-            const libre = primerLibre(f, tomados);
-            if (libre === null) {
-                conflictos.push(`Línea ${item.linea}: la fila ${f} no tiene lugares libres`);
-                return;
-            }
-            p = libre;
-        }
-
-        const clave = claveLugar(f, p);
-        if (OCUPADOS.has(clave)) {
-            conflictos.push(`Línea ${item.linea}: el lugar fila ${f} posición ${p} ya está ocupado`);
-            return;
-        }
-        if (estado.elegidos.has(clave)) {
-            const previo = estado.elegidos.get(clave);
-            conflictos.push(
-                `Línea ${item.linea}: el lugar fila ${f} posición ${p} ya tiene ${previo.etiqueta || "un equipo sin código"}`
-            );
-            return;
-        }
-
-        // Etiqueta repetida: contra la sala, contra lo ya elegido o
-        // contra otra línea de esta misma lista.
-        const minus = item.etiqueta.toLowerCase();
-        if (CODIGOS_USADOS.has(minus)) {
-            conflictos.push(`Línea ${item.linea}: la etiqueta "${item.etiqueta}" ya existe en esta sala`);
-            return;
-        }
-        if (usadas.has(minus)) {
-            conflictos.push(`Línea ${item.linea}: la etiqueta "${item.etiqueta}" ya está en la lista`);
-            return;
-        }
-        if (enEstaTanda.has(minus)) {
-            conflictos.push(`Línea ${item.linea}: la etiqueta "${item.etiqueta}" está repetida en la lista`);
-            return;
-        }
-        enEstaTanda.add(minus);
-        tomados.add(clave);
-
-        nuevos.push({ clave, fila: f, posicion: p, etiqueta: item.etiqueta });
-    });
-
-    if (conflictos.length > 0) {
-        if (nota) {
-            nota.hidden = false;
-            nota.classList.add("is-error");
-            nota.textContent = conflictos.join(". ");
-        }
-        return;
-    }
-
-    nuevos.forEach(n => {
-        estado.elegidos.set(n.clave, {
-            fila: n.fila, posicion: n.posicion, etiqueta: n.etiqueta,
-        });
-        estado.errores.delete(n.clave);
-    });
-
-    if (dlg) dlg.close();
-    if (txt) txt.value = "";
-    refrescar();
-    marcarPista(`Se cargaron ${nuevos.length} equipo(s) desde la lista.`);
-
-    if (invalidas.length > 0) {
-        marcarPista(`Se cargaron ${nuevos.length} equipo(s). Omitidas: ${invalidas.join(". ")}`, "error");
-    }
-}
-
-// Primer lugar libre de una fila: sin equipo existente, sin elegir por
-// el admin y sin haber sido tomado en esta tanda de pegado.
-function primerLibre(fila, tomados) {
-    const usados = new Set();
-    estado.elegidos.forEach((d, clave) => {
-        const [f, p] = clave.split(":").map(Number);
-        if (f === fila) usados.add(p);
-    });
-    for (let p = 1; p <= MAX_EDITOR; p++) {
-        const clave = claveLugar(fila, p);
-        if (OCUPADOS.has(clave)) continue;
-        if (usados.has(p)) continue;
-        if (tomados && tomados.has(clave)) continue;
-        return p;
-    }
-    return null;
-}
-
-// ============================================================
 // GUARDAR: TODO EN UNA SOLA PETICIÓN
 // ============================================================
 // Si falla, lo escrito se conserva y el error queda marcado en el
@@ -1306,50 +1089,6 @@ function conectarEventos() {
     // Inicializar estado de botones
     actualizarUIModoEliminar();
 
-    // "+ agregar lugar": agrega un lugar en la fila seleccionada.
-    const btnAgregar = el("btn-agregar");
-    if (btnAgregar) {
-        btnAgregar.addEventListener("click", () => agregarLugar(estado.filaSeleccionada));
-    }
-
-    // "Seleccionar toda la fila".
-    const btnFila = el("btn-fila");
-    if (btnFila) {
-        btnFila.addEventListener("click", () => {
-            mostrarSelectorFila(true);
-            seleccionarFila(estado.filaSeleccionada);
-        });
-    }
-    const selFila = el("sel-fila");
-    if (selFila) {
-        selFila.addEventListener("change", () => {
-            estado.filaSeleccionada = Number(selFila.value) || 1;
-        });
-    }
-    const btnSelFila = el("btn-seleccionar-fila");
-    if (btnSelFila) {
-        btnSelFila.addEventListener("click", () => {
-            seleccionarFila(estado.filaSeleccionada);
-        });
-    }
-
-    // "Pegar lista".
-    const btnLista = el("btn-lista");
-    const dlgLista = el("dlg-lista");
-    if (btnLista && dlgLista) {
-        btnLista.addEventListener("click", () => {
-            const nota = el("nota-lista-pegar");
-            if (nota) { nota.hidden = true; nota.textContent = ""; nota.classList.remove("is-error"); }
-            dlgLista.showModal();
-        });
-    }
-    const btnConfLista = el("btn-confirmar-lista");
-    if (btnConfLista) btnConfLista.addEventListener("click", confirmarLista);
-    const btnCancLista = el("btn-cancelar-lista");
-    if (btnCancLista && dlgLista) {
-        btnCancLista.addEventListener("click", () => dlgLista.close());
-    }
-
     // Diálogo del código.
     const dlgCodigo = el("dlg-codigo");
     const btnConfCod = el("btn-confirmar-codigo");
@@ -1392,24 +1131,13 @@ function conectarEventos() {
         });
     }
 
-    // "Limpiar selección".
-    const btnLimpiar = el("btn-limpiar");
-    if (btnLimpiar) btnLimpiar.addEventListener("click", limpiarSeleccion);
-
     // Guardar.
     const btnGuardar = el("btn-guardar");
     if (btnGuardar) btnGuardar.addEventListener("click", guardar);
 }
 
-// Muestra u oculta el selector de fila del panel.
-function mostrarSelectorFila(mostrar) {
-    const sel = el("selector-fila");
-    if (sel) sel.hidden = !mostrar;
-}
-
 // ── Arranque ──
 document.addEventListener("DOMContentLoaded", () => {
     conectarEventos();
-    mostrarSelectorFila(false);
     refrescar();
 });

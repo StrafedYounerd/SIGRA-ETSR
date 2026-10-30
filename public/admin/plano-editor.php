@@ -96,7 +96,7 @@ ui_head([
     'activo' => 'salas',
 ]);
 ?>
-<link rel="stylesheet" href="/css/editor-plano.css?v=5">
+<link rel="stylesheet" href="/css/editor-plano.css?v=6">
     <div class="editor-plano">
 
         <!-- ── Barra superior: sala y acciones ── -->
@@ -127,12 +127,8 @@ ui_head([
                         </svg>
                     </span> Modo Eliminar
                 </button>
-                <button type="button" class="btn-editor" id="btn-fila">Seleccionar toda la fila</button>
-                <button type="button" class="btn-editor" id="btn-lista">Pegar lista</button>
-                <button type="button" class="btn-editor" id="btn-limpiar">Limpiar selección</button>
-                <button type="button" class="btn-editor btn-editor--agregar" id="btn-agregar">+ agregar lugar</button>
                 <button type="button" class="btn-editor btn-editor--principal" id="btn-guardar" disabled>
-                    Guardar equipos
+                    Guardar cambios
                 </button>
             </div>
             <!-- Banner de modo eliminar -->
@@ -181,16 +177,6 @@ ui_head([
                 <aside class="editor-plano__panel" aria-label="Equipos a agregar">
                     <h2>Equipos a agregar</h2>
 
-                    <div class="editor-plano__filas" id="selector-fila" hidden>
-                        <label for="sel-fila">Fila</label>
-                        <select id="sel-fila">
-                            <option value="1">Fila 1 (columna derecha)</option>
-                            <option value="2">Fila 2 (fila del fondo)</option>
-                            <option value="3">Fila 3 (columna izquierda)</option>
-                        </select>
-                        <button type="button" class="btn-editor" id="btn-seleccionar-fila">Seleccionar</button>
-                    </div>
-
                     <ul class="editor-plano__lista" id="lista"></ul>
 
                     <p class="nota" id="nota-lista">Todavía no agregaste equipos.</p>
@@ -207,24 +193,6 @@ ui_head([
                 <h3>Lugares libres</h3>
                 <ul></ul>
             </div>
-
-            <!-- ── Diálogo de pegado de lista ── -->
-            <dialog id="dlg-lista" class="editor-plano__dlg">
-                <form method="dialog">
-                    <h2>Pegar lista de equipos</h2>
-                    <p class="nota">
-                        Un equipo por línea. Cada línea puede ser solo el código
-                        (usa la fila y posición libres siguientes) o
-                        <code>Fila,Posición,Código</code>.
-                    </p>
-                    <textarea id="txt-lista" rows="10" placeholder="PC-305-01&#10;2,1,PC-305-02&#10;PC-305-03"></textarea>
-                    <p class="nota" id="nota-lista-pegar" role="alert" hidden></p>
-                    <div class="editor-plano__dlg-acciones">
-                        <button type="button" class="btn-editor" id="btn-cancelar-lista">Cancelar</button>
-                        <button type="button" class="btn-editor btn-editor--principal" id="btn-confirmar-lista">Agregar</button>
-                    </div>
-                </form>
-            </dialog>
 
             <!-- ── Diálogo de confirmación de eliminación ── -->
             <dialog id="dlg-eliminar" class="editor-plano__dlg">
