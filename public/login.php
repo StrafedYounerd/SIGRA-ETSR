@@ -121,8 +121,8 @@ function redirigirSegunRol($rol) {
     <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
     <title>SIGRA-ETSR · Iniciar sesión</title>
     <link rel="stylesheet" href="/css/theme.css">
-    <link rel="stylesheet" href="/css/estilos.css?v=8">
-    <link rel="stylesheet" href="/css/login.css?v=7">
+    <link rel="stylesheet" href="/css/estilos.css?v=9">
+    <link rel="stylesheet" href="/css/login.css?v=8">
 </head>
 <body class="cuerpo-login">
 
@@ -136,7 +136,9 @@ function redirigirSegunRol($rol) {
         <button class="pausa" id="pausa" type="button" aria-pressed="false">Pausar movimiento</button>
         <div class="texto">
             <span class="logo-pastilla">
-                <img src="/img/logo-accessnet.png" alt="Logo de AccessNet">
+                <a href="https://accessnet.sigra-etsr.online/" target="_blank" rel="noopener">
+                    <img src="/img/logo-accessnet.png" alt="Logo de AccessNet">
+                </a>
             </span>
             <h1>SIGRA-ETSR</h1>
             <p class="frase">Sistema de gestión y relevamiento de aulas</p>
@@ -160,7 +162,9 @@ function redirigirSegunRol($rol) {
     <!-- Formulario -->
     <div class="login-form">
         <div class="marcas">
-            <img src="/img/logo-accessnet.png" alt="Logo de AccessNet" class="logo-accessnet">
+            <a href="https://accessnet.sigra-etsr.online/" target="_blank" rel="noopener">
+                <img src="/img/logo-accessnet.png" alt="Logo de AccessNet" class="logo-accessnet">
+            </a>
             <i></i>
             <img src="/img/logo-etsr.png" alt="Logo de la Escuela Técnica Superior de Rivera (UTU)" class="logo-etsr">
         </div>
@@ -199,10 +203,10 @@ function redirigirSegunRol($rol) {
     var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var movil = window.matchMedia("(max-width: 720px)");
 
-    /* Estado de ejecución: corre salvo que el sistema pida reducir
-       movimiento. El botón refleja siempre este estado. */
+    /* Animación de escaneo de sala: un pulso geométrico que emana de
+       centros de red. Más limpio y orgánico que la red de nodos clásica. */
     var run = !reduce;
-    var W = 0, H = 0, N = [], P = [], raf;
+    var W = 0, H = 0, P = [], raf;
     var pausa = document.getElementById("pausa");
 
     function sincronizarBoton() {
@@ -214,77 +218,48 @@ function redirigirSegunRol($rol) {
 
     function size() {
         var r = cv.getBoundingClientRect();
-        /* Sin layout todavía, canvas oculto (móvil) o mismo tamaño
-           que el último cálculo: nada que hacer (la llamada inicial
-           del ResizeObserver cae acá y no redibuja de más). */
         if (!r.width || (r.width === W && r.height === H)) return;
         var d = window.devicePixelRatio || 1;
         W = r.width; H = r.height;
         cv.width = W * d; cv.height = H * d;
         cx.setTransform(d, 0, 0, d, 0, 0);
-        var n = movil.matches ? 0 : Math.round(Math.min(60, W * H / 14000));
-        N = [];
+
+        // Crear puntos de pulso
+        P = [];
+        var n = movil.matches ? 3 : 6;
         for (var i = 0; i < n; i++) {
-            N.push({
+            P.push({
                 x: Math.random() * W, y: Math.random() * H,
-                vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25,
-                blanco: Math.random() < .35   /* algunos nodos blancos, baja opacidad */
+                r: 0, maxR: 100 + Math.random() * 100,
+                alpha: 1
             });
         }
-        P = [];
-        /* Primer cuadro inmediato: "once" solo evita MOVER los nodos
-           cuando está pausada; si corre, el cuadro mueve y el loop
-           se agenda solo. */
         frame(!run);
     }
 
     function frame(once) {
         cx.clearRect(0, 0, W, H);
-        N.forEach(function (a) {
+
+        P.forEach(function (p) {
+            // Dibujar pulso
+            cx.beginPath();
+            cx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+            cx.strokeStyle = "rgba(0,196,204," + p.alpha * 0.5 + ")";
+            cx.stroke();
+
             if (run && !once) {
-                a.x += a.vx; a.y += a.vy;
-                if (a.x < 0 || a.x > W) a.vx *= -1;
-                if (a.y < 0 || a.y > H) a.vy *= -1;
-            }
-        });
-        var L = [];
-        for (var i = 0; i < N.length; i++) {
-            for (var j = i + 1; j < N.length; j++) {
-                var dx = N[i].x - N[j].x, dy = N[i].y - N[j].y;
-                var d = Math.hypot(dx, dy);
-                if (d < 150) {
-                    L.push([i, j]);
-                    /* Alternar enlaces aqua y blancos, ambos con opacidad baja */
-                    var base = (i + j) % 2 === 0 ? "0,196,204" : "255,255,255";
-                    cx.strokeStyle = "rgba(" + base + "," + (.30 * (1 - d / 150)) + ")";
-                    cx.lineWidth = 1;
-                    cx.beginPath(); cx.moveTo(N[i].x, N[i].y); cx.lineTo(N[j].x, N[j].y); cx.stroke();
+                p.r += 0.8;
+                p.alpha = 1 - (p.r / p.maxR);
+                if (p.alpha <= 0) {
+                    p.r = 0; p.alpha = 1;
+                    p.x = Math.random() * W; p.y = Math.random() * H;
                 }
             }
-        }
-        if (run && !once && L.length && Math.random() < .06) {
-            P.push({ l: L[Math.floor(Math.random() * L.length)], t: 0 });
-        }
-        P = P.filter(function (p) { return p.t < 1; });
-        P.forEach(function (p) {
-            if (run && !once) p.t += .018;
-            var a = N[p.l[0]], b = N[p.l[1]];
-            cx.fillStyle = "rgba(0,196,204,.9)";
-            cx.beginPath();
-            cx.arc(a.x + (b.x - a.x) * p.t, a.y + (b.y - a.y) * p.t, 2.6, 0, 7);
-            cx.fill();
         });
-        N.forEach(function (a) {
-            cx.fillStyle = a.blanco ? "rgba(255,255,255,.55)" : "rgba(0,196,204,.85)";
-            cx.beginPath(); cx.arc(a.x, a.y, 2.4, 0, 7); cx.fill();
-        });
-        /* El loop se agenda SIEMPRE que esté corriendo, también en el
-           cuadro inicial. Acá estaba el bug: la re-agenda estaba
-           protegida por !once y size() llamaba frame(true), así que
-           la red nacía congelada hasta tocar el botón dos veces o
-           cambiar de pestaña. */
+
         if (run) raf = requestAnimationFrame(function () { frame(); });
     }
+
 
     pausa.addEventListener("click", function () {
         run = !run;
