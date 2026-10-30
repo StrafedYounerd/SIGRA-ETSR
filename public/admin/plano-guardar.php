@@ -45,16 +45,18 @@ if ($id_sala <= 0) {
 // ── Lugares elegidos ──
 // Vienen como JSON: [{etiqueta, fila, posicion}, ...]
 $crudo = trim($_POST['lugares'] ?? '');
-if ($crudo === '') {
-    http_response_code(400);
-    echo json_encode(['exito' => false, 'mensaje' => 'No se envió ninguna lista de equipos']);
-    exit();
-}
+$lugares = $crudo !== '' ? json_decode($crudo, true) : [];
+if (!is_array($lugares)) $lugares = [];
 
-$lugares = json_decode($crudo, true);
-if (!is_array($lugares) || count($lugares) === 0) {
+// ── Equipos a eliminar ──
+// Vienen como JSON: [id_pc, id_pc, ...]
+$crudo_eliminados = trim($_POST['eliminados'] ?? '[]');
+$eliminados = json_decode($crudo_eliminados, true);
+if (!is_array($eliminados)) $eliminados = [];
+
+if (empty($lugares) && empty($eliminados)) {
     http_response_code(400);
-    echo json_encode(['exito' => false, 'mensaje' => 'La lista de equipos no es válida']);
+    echo json_encode(['exito' => false, 'mensaje' => 'No se envió ninguna acción']);
     exit();
 }
 
@@ -283,6 +285,38 @@ try {
         }
     }
 
+    // (6) Eliminar equipos marcados, con verificación de integridad.
+    if (!empty($eliminados)) {
+        // Verificar que ninguna PC a eliminar tenga tickets activos.
+        $consulta_tickets = $conexion->prepare(
+            "SELECT id_pc FROM tickets WHERE id_pc = ? AND estado IN ('pendiente', 'en_reparacion')"
+        );
+        if (!$consulta_tickets) {
+            throw new Exception('No se pudo preparar la verificación de tickets: ' . $conexion->error);
+        }
+        foreach ($eliminados as $id_pc) {
+            $consulta_tickets->bind_param("i", $id_pc);
+            $consulta_tickets->execute();
+            if ($consulta_tickets->get_result()->fetch_assoc()) {
+                throw new Exception("No se puede eliminar la PC #{$id_pc} porque tiene tickets activos");
+            }
+        }
+
+        // Eliminar dentro de la misma transacción.
+        $eliminar = $conexion->prepare(
+            "DELETE FROM pcs WHERE id_pc = ? AND id_sala = ?"
+        );
+        if (!$eliminar) {
+            throw new Exception('No se pudo preparar la eliminación: ' . $conexion->error);
+        }
+        foreach ($eliminados as $id_pc) {
+            $eliminar->bind_param("ii", $id_pc, $id_sala);
+            if (!$eliminar->execute()) {
+                throw new Exception("No se pudo eliminar la PC #{$id_pc}: " . $eliminar->error);
+            }
+        }
+    }
+
     // (6) Recién acá se hace efectivo: un solo commit atómico.
     $conexion->commit();
 } catch (Exception $e) {
@@ -298,8 +332,13 @@ try {
 
 echo json_encode([
     'exito' => true,
-    'mensaje' => count($vistos) === 1
-        ? 'Se agregó 1 equipo a ' . $sala['nombre_sala']
-        : 'Se agregaron ' . count($vistos) . ' equipos a ' . $sala['nombre_sala'],
+    'mensaje' =>
+        (count($vistos) > 0 && count($eliminados) > 0)
+            ? 'Se agregaron ' . count($vistos) . ' equipos y se eliminaron ' . count($eliminados) . ' equipos de ' . $sala['nombre_sala']
+            : (count($vistos) > 0
+                ? (count($vistos) === 1 ? 'Se agregó 1 equipo a ' . $sala['nombre_sala'] : 'Se agregaron ' . count($vistos) . ' equipos a ' . $sala['nombre_sala'])
+                : 'Se eliminaron ' . count($eliminados) . ' equipos de ' . $sala['nombre_sala']
+            ),
     'total' => count($vistos),
+    'eliminados' => count($eliminados),
 ]);

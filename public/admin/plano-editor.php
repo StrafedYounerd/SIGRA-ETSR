@@ -79,6 +79,7 @@ $json_equipos = [];
 $ocupados = [];
 foreach ($equipos as $e) {
     $json_equipos[] = [
+        'id_pc'         => (int)$e['id_pc'],
         'etiqueta'      => $e['etiqueta'],
         'tipo_equipo'   => $e['tipo_equipo'],
         'fila'          => (int)$e['fila'],
@@ -116,6 +117,8 @@ ui_head([
             </div>
 
             <div class="editor-plano__acciones">
+                <button type="button" class="btn-editor" id="btn-modo-agregar">Modo Agregar</button>
+                <button type="button" class="btn-editor" id="btn-modo-eliminar">Modo Eliminar</button>
                 <button type="button" class="btn-editor" id="btn-fila">Seleccionar toda la fila</button>
                 <button type="button" class="btn-editor" id="btn-lista">Pegar lista</button>
                 <button type="button" class="btn-editor" id="btn-limpiar">Limpiar selección</button>
@@ -196,6 +199,18 @@ ui_head([
                     <div class="editor-plano__dlg-acciones">
                         <button type="button" class="btn-editor" id="btn-cancelar-lista">Cancelar</button>
                         <button type="button" class="btn-editor btn-editor--principal" id="btn-confirmar-lista">Agregar</button>
+                    </div>
+                </form>
+            </dialog>
+
+            <!-- ── Diálogo de confirmación de eliminación ── -->
+            <dialog id="dlg-eliminar" class="editor-plano__dlg">
+                <form method="dialog">
+                    <h2>Confirmar eliminación</h2>
+                    <p id="texto-eliminar">¿Estás seguro de que quieres eliminar este equipo?</p>
+                    <div class="editor-plano__dlg-acciones">
+                        <button type="button" class="btn-editor" id="btn-cancelar-eliminar">Cancelar</button>
+                        <button type="button" class="btn-editor btn-editor--principal" id="btn-confirmar-eliminar">Eliminar</button>
                     </div>
                 </form>
             </dialog>

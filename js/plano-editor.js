@@ -58,6 +58,13 @@ const CODIGOS_USADOS = new Set(
 
 // ── Ayudas de DOM ──
 const $ = sel => document.querySelector(sel);
+// Estado extra para eliminación
+const eliminados = new Set();
+let modoEliminar = false;
+// ---- adicional ----
+const eliminados = new Set(); // IDs de PCs marcados para eliminar
+let modoEliminar = false;
+
 
 const claveLugar = (fila, posicion) => `${fila}:${posicion}`;
 
@@ -145,6 +152,15 @@ function equiposDeLaSala() {
 function dibujarPlano() {
     const svg = el("plano-editor");
     if (!svg) return;
+    // Actualizar el título contextual según el modo
+    const pista = el("pista");
+    if (pista) {
+        if (modoEliminar) {
+            pista.textContent = "Modo Eliminar: clickeá un equipo existente para marcarlo para borrar.";
+        } else {
+            pista.textContent = "Tocá un lugar libre del plano para agregar una PC.";
+        }
+    }
 
     recalcularSlots();
 
@@ -209,7 +225,7 @@ function dibujarPlano() {
         const f = Number(e.fila), p = Number(e.posicion);
         const c = L.posiciones[f] && L.posiciones[f][p - 1];
         if (!c) return;
-        frag.appendChild(dibujarMesaOcupada(c, e.etiqueta));
+        frag.appendChild(dibujarMesaOcupada(c, e));
     });
 
     // Las PCs nuevas que ya eligió el admin (dibujadas encima).
@@ -332,9 +348,22 @@ function dibujarMesa(c, clase, texto, extra) {
 }
 
 // Equipo YA existente en la sala: atenuado, NO clickeable.
-function dibujarMesaOcupada(c, etiqueta) {
+function dibujarMesaOcupada(c, equipo) {
+    const etiqueta = equipo.etiqueta;
     const g = dibujarMesa(c, "mesa-ocupada", null);
     g.setAttribute("aria-hidden", "true");
+    // Hacer clickeable si estamos en modo eliminar
+    if (modoEliminar) {
+        g.style.cursor = "pointer";
+        g.setAttribute("data-id-pc", equipo.id_pc);
+        g.addEventListener("click", () => toggleEliminar(equipo.id_pc));
+        if (eliminados.has(equipo.id_pc)) {
+            g.classList.add("mesa-a-eliminar");
+            // Opcional: tachar el texto
+            const textEl = g.querySelector("text");
+            if (textEl) textEl.style.textDecoration = "line-through";
+        }
+    }
     const tam = tamanoMesa(c.o);
     const cx = c.x + tam.w / 2, cy = c.y + tam.h / 2;
     const dx = c.o === "der" ? -8 : (c.o === "izq" ? 8 : 0);
@@ -478,6 +507,39 @@ function quitarLugar(fila, posicion) {
     refrescar();
 }
 
+// ── Eliminación de equipos existentes ──
+// Busca un equipo de la sala por su id_pc (el que manda el servidor
+// en DATOS_EDITOR.equipos).
+function buscarEquipoPorId(id_pc) {
+    return equiposDeLaSala().find(e => Number(e.id_pc) === Number(id_pc));
+}
+
+// Solo el id pendiente de confirmar en el diálogo.
+let pcPendienteEliminar = null;
+
+// Marca o desmarca un equipo para eliminarlo. Desmarcar es inmediato;
+// marcar pide confirmación (borrar un dispositivo no se deshace).
+function toggleEliminar(id_pc) {
+    const equipo = buscarEquipoPorId(id_pc);
+    if (!equipo) return;
+
+    if (eliminados.has(id_pc)) {
+        eliminados.delete(id_pc);
+        refrescar();
+        marcarPista(`Se desmarcó ${equipo.etiqueta}. No se va a eliminar.`);
+        return;
+    }
+
+    pcPendienteEliminar = id_pc;
+    const dlg = el("dlg-eliminar");
+    const texto = el("texto-eliminar");
+    if (texto) {
+        texto.textContent = `¿Seguro que querés eliminar ${equipo.etiqueta}? `
+            + "Se borra del plano y de la sala. Esta acción no se puede deshacer.";
+    }
+    if (dlg) dlg.showModal();
+}
+
 // Activa un lugar: si ya estaba elegido, se abre el diálogo para
 // editar su código; si estaba libre, se abre el diálogo para escribir
 // el código desde cero.
@@ -611,8 +673,58 @@ function renderLista() {
     }
     if (total) total.textContent = String(lugares.length);
 
+    // ── Equipos marcados para eliminar (solo en modo eliminar) ──
+    // Se listan aparte, con su propio contador, para que el admin vea
+    // qué se va a borrar antes de confirmar el guardado.
+    let contEliminados = el("lista-eliminados");
+    if (!contEliminados) {
+        contEliminados = document.createElement("ul");
+        contEliminados.id = "lista-eliminados";
+        contEliminados.className = "editor-plano__lista eliminados-lista";
+        lista.parentNode.appendChild(contEliminados);
+    }
+    contEliminados.replaceChildren();
+    contEliminados.hidden = eliminados.size === 0;
+    if (eliminados.size > 0) {
+        const titulo = document.createElement("li");
+        titulo.className = "eliminados-titulo";
+        titulo.textContent = `Para eliminar (${eliminados.size})`;
+        contEliminados.appendChild(titulo);
+
+        eliminados.forEach(id_pc => {
+            const equipo = buscarEquipoPorId(id_pc);
+            const li = document.createElement("li");
+            li.className = "eliminado";
+            const texto = document.createElement("span");
+            texto.textContent = equipo ? equipo.etiqueta : `Equipo #${id_pc}`;
+            li.appendChild(texto);
+
+            const quitar = document.createElement("button");
+            quitar.type = "button";
+            quitar.className = "quitar";
+            quitar.textContent = "×";
+            quitar.setAttribute("aria-label",
+                `Desmarcar ${equipo ? equipo.etiqueta : "equipo"} de la eliminación`);
+            quitar.addEventListener("click", () => toggleEliminar(id_pc));
+            li.appendChild(quitar);
+            contEliminados.appendChild(li);
+        });
+    }
+
+    // El botón de guardar se habilita si hay algo que agregar O algo
+    // que eliminar, y cambia de texto según lo pendiente.
     const btn = el("btn-guardar");
-    if (btn) btn.disabled = lugares.length === 0;
+    if (btn) {
+        const hayAlgo = lugares.length > 0 || eliminados.size > 0;
+        btn.disabled = !hayAlgo;
+        if (eliminados.size > 0) {
+            btn.textContent = lugares.length > 0
+                ? `Guardar y eliminar (${lugares.length + eliminados.size})`
+                : `Eliminar ${eliminados.size} equipo(s)`;
+        } else {
+            btn.textContent = "Guardar equipos";
+        }
+    }
 }
 
 // Refresca toda la vista (plano + lista).
@@ -954,8 +1066,8 @@ function primerLibre(fila, tomados) {
 // Si falla, lo escrito se conserva y el error queda marcado en el
 // lugar (nada se pierde).
 function guardar() {
-    if (estado.elegidos.size === 0) {
-        marcarPista("No hay equipos para guardar.", "error");
+    if (estado.elegidos.size === 0 && eliminados.size === 0) {
+        marcarPista("No hay equipos para guardar ni eliminar.", "error");
         return;
     }
     if (!validar()) {
@@ -977,6 +1089,7 @@ function guardar() {
     const cuerpo = new URLSearchParams();
     cuerpo.set("id_sala", String(DATOS_EDITOR.sala.id));
     cuerpo.set("lugares", JSON.stringify(lugares));
+    cuerpo.set("eliminados", JSON.stringify(Array.from(eliminados)));
 
     fetch(DATOS_EDITOR.guardar_url || "plano-guardar.php", {
         method: "POST",
@@ -1108,6 +1221,20 @@ function conectarEventos() {
         });
     }
 
+    // Modos Agregar / Eliminar
+    const btnModoAgregar = el("btn-modo-agregar");
+    const btnModoEliminar = el("btn-modo-eliminar");
+    if (btnModoAgregar && btnModoEliminar) {
+        btnModoAgregar.addEventListener("click", () => {
+            modoEliminar = false;
+            refrescar();
+        });
+        btnModoEliminar.addEventListener("click", () => {
+            modoEliminar = true;
+            refrescar();
+        });
+    }
+
     // "+ agregar lugar": agrega un lugar en la fila seleccionada.
     const btnAgregar = el("btn-agregar");
     if (btnAgregar) {
@@ -1161,6 +1288,29 @@ function conectarEventos() {
         btnCancCod.addEventListener("click", () => {
             lugarEnEdicion = null;
             dlgCodigo.close();
+        });
+    }
+
+    // Diálogo de eliminación.
+    const dlgEliminar = el("dlg-eliminar");
+    const btnConfEliminar = el("btn-confirmar-eliminar");
+    const btnCancEliminar = el("btn-cancelar-eliminar");
+    if (btnConfEliminar) {
+        btnConfEliminar.addEventListener("click", () => {
+            if (pcPendienteEliminar !== null) {
+                eliminados.add(pcPendienteEliminar);
+                const equipo = buscarEquipoPorId(pcPendienteEliminar);
+                if (equipo) marcarPista(`Se marcó ${equipo.etiqueta} para eliminar.`);
+                pcPendienteEliminar = null;
+                refrescar();
+            }
+            if (dlgEliminar) dlgEliminar.close();
+        });
+    }
+    if (btnCancEliminar && dlgEliminar) {
+        btnCancEliminar.addEventListener("click", () => {
+            pcPendienteEliminar = null;
+            dlgEliminar.close();
         });
     }
     // Enter en el campo de código confirma.
