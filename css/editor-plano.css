@@ -99,6 +99,7 @@
     border: 2px dashed var(--aqua);
     border-radius: 6px; cursor: pointer;
     font-family: inherit; color: var(--aqua-text);
+    pointer-events: auto;
 }
 .editor-plano__svg-wrap .lugar-libre:hover {
     background-color: var(--aqua-50); border-style: solid;

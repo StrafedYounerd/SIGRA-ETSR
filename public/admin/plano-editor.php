@@ -96,7 +96,7 @@ ui_head([
     'activo' => 'salas',
 ]);
 ?>
-<link rel="stylesheet" href="/css/editor-plano.css?v=8">
+<link rel="stylesheet" href="/css/editor-plano.css?v=9">
     <div class="editor-plano">
 
         <!-- ── Barra superior: sala y acciones ── -->
