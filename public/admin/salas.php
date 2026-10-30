@@ -228,8 +228,6 @@ if ($accion === 'editar_pc') {
         $fila          = trim($_POST['fila'] ?? '');
         $posicion      = trim($_POST['posicion'] ?? '');
         $tipo_equipo = trim($_POST['tipo_equipo'] ?? '');
-        $fila          = trim($_POST['fila'] ?? '');
-        $posicion      = trim($_POST['posicion'] ?? '');
         $estado_actual = trim($_POST['estado_actual'] ?? '');
 
         if ($id_sala === '' || $etiqueta === '' || $tipo_equipo === '') {
@@ -277,7 +275,9 @@ if ($accion === 'editar_pc') {
             }
 
             if (!empty($error)) {
-                // Error already set
+                $error = urlencode($error);
+                header("Location: salas.php?accion=editar&sala=$id_sala&id_pc=$id_pc&error=$error");
+                exit();
             } elseif (!in_array($estado_actual, ['funcional', 'falla', 'sin_eval'])) {
                 $error = "Estado del equipo no válido";
             } else {
@@ -298,7 +298,7 @@ if ($accion === 'editar_pc') {
                         }
 
                         $estado_actual_update = $estado_actual;
-                        $actualizar->bind_param("issiis", $id_sala, $etiqueta, $tipo_equipo, $filaValue, $posicionValue, $estado_actual_update);
+                        $actualizar->bind_param("issiiis", $id_sala, $etiqueta, $tipo_equipo, $filaValue, $posicionValue, $estado_actual_update, $id_pc);
                         if (!$actualizar->execute()) {
                             throw new Exception("Error en la ejecución de la consulta: " . $actualizar->error);
                         }
@@ -407,7 +407,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $accion === 'crear_sala') {
 
     // La sala nueva no tiene PCs: se pasa directo al editor de plano,
     // que es la forma de cargarlas.
-    header("Location: plano-editor.php?id_sala=" . $id_sala_nueva . "&msg=" . urlencode(
+    header("Location: /admin/plano-editor.php?id_sala=" . $id_sala_nueva . "&msg=" . urlencode(
         "Sala creada. Tocá los lugares libres del plano para agregar sus PCs."
     ));
     exit();
@@ -524,7 +524,7 @@ ui_head([
                     entera o pegar una lista de códigos.
                 </p>
             </div>
-            <form class="cta-plano__form" method="GET" action="plano-editor.php">
+            <form class="cta-plano__form" method="GET" action="/admin/plano-editor.php">
                 <label for="cta-sala">Sala</label>
                 <select id="cta-sala" name="id_sala" required>
                     <option value="">-- Elegí una sala --</option>
