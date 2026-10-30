@@ -43,7 +43,6 @@ const FILAS = [1, 2, 3];
 const estado = {
     elegidos: new Map(),
     slots: { 1: 0, 2: 0, 3: 0 },
-    extraSlots: { 1: 0, 2: 0, 3: 0 },
     errores: new Map(),
 };
 
@@ -108,8 +107,7 @@ function etiquetaCorta(etiqueta) {
 // CÁLCULO DE LUGARES
 // ============================================================
 // Cuántas posiciones se ven en cada fila: las que ya existen (ocupadas)
-// más las que el admin agranda con "+ agregar lugar" o "Seleccionar
-// toda la fila". Se respeta el tope MAX_POR_FILA.
+// más las que el admin eligió en esta sesión. Se respeta el tope MAX_POR_FILA.
 function recalcularSlots() {
     FILAS.forEach(f => {
         const base = (DATOS_EDITOR.max_pos && DATOS_EDITOR.max_pos[f]) || 0;
@@ -118,11 +116,7 @@ function recalcularSlots() {
             const [ff, pp] = clave.split(":").map(Number);
             if (ff === f) extra = Math.max(extra, pp);
         });
-        // extraSlots[f]: hasta qué posición llegó la fila cuando el
-        // admin apretó "+ agregar lugar". Una sala vacía tiene 0
-        // equipos: el primer "+" abre la fila 1 con un solo lugar.
-        const pedido = Math.max(extra, estado.extraSlots[f]);
-        estado.slots[f] = Math.min(MAX_EDITOR, Math.max(base, pedido));
+        estado.slots[f] = Math.min(MAX_EDITOR, Math.max(base, extra));
     });
 }
 
@@ -244,15 +238,6 @@ function dibujarPlano() {
         }
     });
 
-    // Botón "+ agregar lugar": uno por fila, en una tira DEBAJO del
-    // plano. No se puede poner en el extremo de cada fila porque en
-    // la fila del fondo (fila 2) no queda lugar libre: se superpondría
-    // con las columnas 1 y 3.
-    FILAS.forEach(f => {
-        if (estado.slots[f] >= MAX_EDITOR) return;
-        frag.appendChild(dibujarAgregarLugar(f, yTira));
-    });
-
     // Resumen en el centro de la U
     frag.appendChild(svgEl("text", {
         x: L.W / 2, y: 268 + L.dy / 2, "text-anchor": "middle",
@@ -276,17 +261,9 @@ function dibujarPlano() {
             activarLugar(Number(btn.dataset.fila), Number(btn.dataset.posicion));
             return;
         }
-        const mas = ev.target.closest("g.agregar-lugar");
-        if (mas) {
-            agregarLugar(Number(mas.dataset.fila));
-        }
     };
     svg.onkeydown = ev => {
-        if (ev.key !== "Enter" && ev.key !== " ") return;
-        const mas = ev.target.closest("g.agregar-lugar");
-        if (!mas) return;   // los <button> HTML ya responden Enter/Espacio
-        ev.preventDefault();
-        agregarLugar(Number(mas.dataset.fila));
+        // Los <button> HTML ya responden Enter/Espacio solos.
     };
 
     // En pantallas chicas el plano scanea en horizontal: se deja
@@ -456,34 +433,6 @@ function dibujarLugarLibre(c, fila, posicion) {
     return fo;
 }
 
-// Botón "+ agregar lugar": va en una tira DEBAJO de la pared inferior
-// del plano, uno por fila. La "y" llega calculada desde las medidas
-// del plano, así la tira nunca tapa la pared ni el pizarrón.
-// (En el extremo de la fila 2 no hay lugar libre: se cruzaría con las
-// columnas 1 y 3.)
-function dibujarAgregarLugar(fila, yTira) {
-    const ancho = 150, alto = 34, sep = 16;
-    const idx = FILAS.filter(f => estado.slots[f] < MAX_EDITOR).indexOf(fila);
-
-    const g = svgEl("g", {
-        class: "agregar-lugar",
-        "data-fila": fila,
-        "data-posicion": estado.slots[fila] + 1,
-        tabindex: "0",
-        role: "button",
-        "aria-label": `Agregar un lugar más en la fila ${fila}`,
-    });
-    g.appendChild(svgEl("rect", {
-        x: 24 + idx * (ancho + sep), y: yTira, width: ancho, height: alto, rx: 6,
-        fill: "var(--color-superficie)", stroke: "var(--aqua)",
-        "stroke-width": 2, "stroke-dasharray": "4 3",
-    }));
-    g.appendChild(svgEl("text", {
-        class: "mas", x: 24 + idx * (ancho + sep) + ancho / 2, y: yTira + 23,
-        "text-anchor": "middle", "font-size": 14,
-    }, `+ fila ${fila}`));
-    return g;
-}
 
 // ============================================================
 // SELECCIÓN Y VALIDACIÓN
@@ -579,21 +528,6 @@ function activarLugar(fila, posicion) {
     const clave = claveLugar(fila, posicion);
     const datos = estado.elegidos.get(clave);
     abrirDialogoCodigo(fila, posicion, datos ? datos.etiqueta : "");
-}
-
-// "+ agregar lugar" (botones "+ fila N" en el plano): extiende la fila en un lugar más.
-function agregarLugar(fila) {
-    if (estado.slots[fila] >= MAX_EDITOR) {
-        marcarPista(`La fila ${fila} ya tiene el máximo de ${MAX_EDITOR} lugares.`, "error");
-        return;
-    }
-    // La fila crece en un lugar: el nuevo slot es el siguiente al
-    // último. Los lugares que ya existían (ocupados) no se corren.
-    estado.extraSlots[fila] = estado.slots[fila] + 1;
-    refrescar();
-    marcarPista(
-        `Se agregó un lugar en la fila ${fila} (posición ${estado.slots[fila]}). Tocá el lugar para escribir el código.`
-    );
 }
 
 // ============================================================

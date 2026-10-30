@@ -116,19 +116,6 @@
 .editor-plano__svg-wrap .lugar-libre.lugar-error {
     border-color: var(--peligro-texto); background-color: #fdecea; border-style: solid;
 }
-.editor-plano__svg-wrap .agregar-lugar {
-    fill: var(--color-superficie); stroke: var(--aqua); stroke-width: 2;
-    stroke-dasharray: 4 3; cursor: pointer;
-}
-.editor-plano__svg-wrap .agregar-lugar:hover { fill: var(--aqua-50); }
-.editor-plano__svg-wrap .agregar-lugar:focus-visible { outline: none; stroke: var(--navy); stroke-width: 3.5; }
-.editor-plano__svg-wrap .agregar-lugar .mas {
-    fill: var(--aqua-text); font-size: 20px;
-    text-anchor: middle; pointer-events: none;
-    /* El <g> pinta con stroke (el borde punteado del botón): sin
-       anularlo, el texto hereda el trazo y se ve engrosado. */
-    stroke: none; font-weight: normal;
-}
 
 /* ── Panel: selector de fila, lista y total ── */
 .editor-plano__filas {
