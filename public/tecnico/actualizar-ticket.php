@@ -89,11 +89,15 @@ $insertar_historial->execute();
 // PASO 7: actualizar el estado del ticket, bifurcando según si es
 // "solucionado" (necesita fecha_cierre y liberar la PC) o no.
 if ($nuevo_estado === 'solucionado') {
+    // Forzar la zona horaria a Montevideo para evitar inconsistencias
+    // con la fecha de cierre guardada en MySQL (UTC).
+    date_default_timezone_set('America/Montevideo');
+    $fecha_cierre = date('Y-m-d H:i:s');
 
     $actualizar_ticket = $conexion->prepare(
-        "UPDATE tickets SET estado = 'solucionado', fecha_cierre = NOW() WHERE id_ticket = ?"
+        "UPDATE tickets SET estado = 'solucionado', fecha_cierre = ? WHERE id_ticket = ?"
     );
-    $actualizar_ticket->bind_param("i", $id_ticket);
+    $actualizar_ticket->bind_param("si", $fecha_cierre, $id_ticket);
     $actualizar_ticket->execute();
 
     // Actualizar el estado visual de la PC en el mapa del docente.
