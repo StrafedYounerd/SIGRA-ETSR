@@ -995,7 +995,10 @@ function conectarEventos() {
         // La clase en el contenedor habilita los estilos de hover/indicador
         // de los equipos (css/editor-plano.css → .modo-eliminar ...).
         const raiz = document.querySelector(".editor-plano");
-        if (raiz) raiz.classList.toggle("modo-eliminar", modoEliminar);
+        if (raiz) {
+            raiz.classList.toggle("modo-eliminar", modoEliminar);
+            raiz.classList.toggle("modo-agregar", !modoEliminar);
+        }
 
         if (modoEliminar) {
             btnModoEliminar.classList.add("is-active");
