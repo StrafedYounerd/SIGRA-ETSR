@@ -96,7 +96,7 @@ ui_head([
     'activo' => 'salas',
 ]);
 ?>
-<link rel="stylesheet" href="/css/editor-plano.css?v=4">
+<link rel="stylesheet" href="/css/editor-plano.css?v=5">
     <div class="editor-plano">
 
         <!-- ── Barra superior: sala y acciones ── -->
@@ -121,7 +121,11 @@ ui_head([
                         aria-pressed="true">Modo Agregar</button>
                 <button type="button" class="btn-editor btn-editor--danger" id="btn-modo-eliminar"
                         aria-pressed="false">
-                    <span class="btn-icon" aria-hidden="true">🗑️</span> Modo Eliminar
+                    <span class="btn-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                        </svg>
+                    </span> Modo Eliminar
                 </button>
                 <button type="button" class="btn-editor" id="btn-fila">Seleccionar toda la fila</button>
                 <button type="button" class="btn-editor" id="btn-lista">Pegar lista</button>
@@ -133,10 +137,18 @@ ui_head([
             </div>
             <!-- Banner de modo eliminar -->
             <div class="editor-plano__banner-eliminar" id="banner-eliminar" role="status" hidden>
-                <span class="banner-icon" aria-hidden="true">⚠️</span>
+                <span class="banner-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                    </svg>
+                </span>
                 <span class="banner-texto">Modo eliminar activo — tocá una PC del plano para marcarla o desmarcarla. Después guardá para confirmar.</span>
                 <button type="button" class="btn-banner-cerrar" id="btn-cancelar-eliminar-modo"
-                        aria-label="Salir del modo eliminar">✕ Salir</button>
+                        aria-label="Salir del modo eliminar">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
             </div>
         </div>
 
@@ -272,7 +284,7 @@ ui_head([
 
 <?php if ($sala): ?>
 <script src="/js/layout-plano.js?v=1"></script>
-<script src="/js/plano-editor.js?v=5"></script>
+<script src="/js/plano-editor.js?v=6"></script>
 <?php endif; ?>
 
 <?php ui_foot(); ?>
