@@ -59,9 +59,6 @@ const CODIGOS_USADOS = new Set(
 // ── Ayudas de DOM ──
 const $ = sel => document.querySelector(sel);
 // Estado extra para eliminación
-const eliminados = new Set();
-let modoEliminar = false;
-// ---- adicional ----
 const eliminados = new Set(); // IDs de PCs marcados para eliminar
 let modoEliminar = false;
 
