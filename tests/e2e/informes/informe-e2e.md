@@ -1,74 +1,74 @@
 # Informe de pruebas E2E — SIGRA-ETSR
 
-- **Fecha:** 2026-10-30 05:34:42
+- **Fecha:** 2026-10-30 06:27:01
 - **Aplicación bajo prueba:** http://localhost:8080
 - **Casos ejecutados:** 8
 - **Resultado general:** ✅ todo OK
 
 ## Datos de prueba
 
-Sala E2E: **E2E-Sala Prueba** (id_sala=990)
+Sala E2E: **E2E-Sala Prueba** (id_sala=993)
 
 | Etiqueta PC | id_pc | Fila | Posición |
 | --- | --- | --- | --- |
-| E2E-PC-1 | 452 | 1 | 1 |
-| E2E-PC-2 | 453 | 1 | 2 |
-| E2E-PC-3 | 454 | 1 | 3 |
+| E2E-PC-1 | 461 | 1 | 1 |
+| E2E-PC-2 | 462 | 1 | 2 |
+| E2E-PC-3 | 463 | 1 | 3 |
 
 | Rol | Usuario | id_usuario |
 | --- | --- | --- |
-| docente | e2e_docente | 118 |
-| tecnico | e2e_tecnico | 119 |
-| admin | e2e_admin | 120 |
+| docente | e2e_docente | 127 |
+| tecnico | e2e_tecnico | 128 |
+| admin | e2e_admin | 129 |
 
 ## Resultado por caso
 
 | Caso | Resultado | Duración | Detalle |
 | --- | --- | --- | --- |
-| E2E-1 · el login correcto redirige al panel de cada rol | ✅ OK | 3.7 s | — |
-| E2E-2 · una contraseña incorrecta no deja entrar y muestra el error | ✅ OK | 1.2 s | — |
-| E2E-3 · sin sesión, las páginas protegidas redirigen al login | ✅ OK | 0.4 s | — |
-| E2E-4 · el docente elige la sala y llega al mapa de la sala | ✅ OK | 2.3 s | — |
-| E2E-5 · el docente reporta una falla y queda el ticket en la base | ✅ OK | 2.6 s | — |
-| E2E-6 · el servidor rechaza el detalle faltante y el reporte duplicado | ✅ OK | 2.8 s | — |
-| E2E-7 · el técnico lleva el ticket de pendiente a solucionado | ✅ OK | 6.2 s | — |
-| E2E-8 · cada rol sólo accede a las páginas de su rol | ✅ OK | 3.8 s | — |
+| E2E-1 · el login correcto redirige al panel de cada rol | ✅ OK | 4.0 s | — |
+| E2E-2 · una contraseña incorrecta no deja entrar y muestra el error | ✅ OK | 1.3 s | — |
+| E2E-3 · sin sesión, las páginas protegidas redirigen al login | ✅ OK | 0.5 s | — |
+| E2E-4 · el docente elige la sala y llega al mapa de la sala | ✅ OK | 2.2 s | — |
+| E2E-5 · el docente reporta una falla y queda el ticket en la base | ✅ OK | 3.1 s | — |
+| E2E-6 · el servidor rechaza el detalle faltante y el reporte duplicado | ✅ OK | 2.9 s | — |
+| E2E-7 · el técnico lleva el ticket de pendiente a solucionado | ✅ OK | 6.5 s | — |
+| E2E-8 · cada rol sólo accede a las páginas de su rol | ✅ OK | 3.9 s | — |
 ## Ids creados por la suite
 
 Estos registros se crean durante la corrida (semilla + efectos de los casos) y se borran al terminar.
 
 | Tabla | id | Etiqueta | Caso |
 | --- | --- | --- | --- |
-| usuarios | 118 | e2e_docente | E2E-semilla |
-| usuarios | 119 | e2e_tecnico | E2E-semilla |
-| usuarios | 120 | e2e_admin | E2E-semilla |
-| salas | 990 | E2E-Sala Prueba | E2E-semilla |
-| pcs | 452 | E2E-PC-1 | E2E-semilla |
-| pcs | 453 | E2E-PC-2 | E2E-semilla |
-| pcs | 454 | E2E-PC-3 | E2E-semilla |
-| tickets | 90 | E2E-PC-1 / No enciende | E2E-5 |
-| tickets | 91 | E2E-PC-2 / Falta de software | E2E-6 |
-| tickets | 92 | E2E-PC-3 / Sin internet | E2E-7 |
+| usuarios | 127 | e2e_docente | E2E-semilla |
+| usuarios | 128 | e2e_tecnico | E2E-semilla |
+| usuarios | 129 | e2e_admin | E2E-semilla |
+| salas | 993 | E2E-Sala Prueba | E2E-semilla |
+| pcs | 461 | E2E-PC-1 | E2E-semilla |
+| pcs | 462 | E2E-PC-2 | E2E-semilla |
+| pcs | 463 | E2E-PC-3 | E2E-semilla |
+| tickets | 99 | E2E-PC-1 / No enciende | E2E-5 |
+| tickets | 100 | E2E-PC-2 / Falta de software | E2E-6 |
+| tickets | 101 | E2E-PC-3 / Sin internet | E2E-7 |
 ## Ids borrados al terminar
 
 Verificación con `SELECT` de que en la base ya no queda nada de la corrida.
 
 | Tabla | id | Etiqueta | Caso |
 | --- | --- | --- | --- |
-| tickets | 90 | — | — |
-| tickets | 91 | — | — |
-| tickets | 92 | — | — |
-| sesiones_docente | 162 | — | — |
-| sesiones_docente | 163 | — | — |
-| sesiones_docente | 164 | — | — |
-| sesiones_docente | 165 | — | — |
-| pcs | 452 | — | — |
-| pcs | 453 | — | — |
-| pcs | 454 | — | — |
-| salas | 990 | — | — |
-| usuarios | 118 | — | — |
-| usuarios | 119 | — | — |
-| usuarios | 120 | — | — |
+| tickets | 99 | — | — |
+| tickets | 100 | — | — |
+| tickets | 101 | — | — |
+| sesiones_docente | 174 | — | — |
+| sesiones_docente | 175 | — | — |
+| sesiones_docente | 176 | — | — |
+| sesiones_docente | 177 | — | — |
+| pcs | 461 | — | — |
+| pcs | 462 | — | — |
+| pcs | 463 | — | — |
+| salas | 993 | — | — |
+| usuarios | 127 | — | — |
+| usuarios | 128 | — | — |
+| usuarios | 129 | — | — |
 ## Consultas SELECT de verificación
 
 ```sql

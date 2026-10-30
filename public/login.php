@@ -190,7 +190,7 @@ function redirigirSegunRol($rol) {
 
 </div>
 
-<script src="/js/login-animations.js?v=6"></script>
+<script src="/js/login-animations.js?v=11"></script>
 <script>
 /* Botón "Ingresar": al enviar, spinner + texto atenuado. El botón NO
    se deshabilita: el submit sigue su curso normal. */

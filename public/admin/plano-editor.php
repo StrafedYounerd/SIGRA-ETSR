@@ -252,7 +252,7 @@ ui_head([
 
 <?php if ($sala): ?>
 <script src="/js/layout-plano.js?v=1"></script>
-<script src="/js/plano-editor.js?v=11"></script>
+<script src="/js/plano-editor.js?v=12"></script>
 <?php endif; ?>
 
 <?php ui_foot(); ?>

@@ -108,6 +108,8 @@ function etiquetaCorta(etiqueta) {
 // ============================================================
 // Cuántas posiciones se ven en cada fila: las que ya existen (ocupadas)
 // más las que el admin eligió en esta sesión. Se respeta el tope MAX_POR_FILA.
+// Si la fila está vacía (base=0 y extra=0), mostramos MAX_POR_FILA posiciones
+// para que el admin pueda empezar a agregar equipos.
 function recalcularSlots() {
     FILAS.forEach(f => {
         const base = (DATOS_EDITOR.max_pos && DATOS_EDITOR.max_pos[f]) || 0;
@@ -116,7 +118,13 @@ function recalcularSlots() {
             const [ff, pp] = clave.split(":").map(Number);
             if (ff === f) extra = Math.max(extra, pp);
         });
-        estado.slots[f] = Math.min(MAX_EDITOR, Math.max(base, extra));
+        // Si no hay equipos en la fila ni seleccionados, mostrar todas las
+        // posiciones disponibles (MAX_POR_FILA) para que se puedan agregar.
+        if (base === 0 && extra === 0) {
+            estado.slots[f] = MAX_EDITOR;
+        } else {
+            estado.slots[f] = Math.min(MAX_EDITOR, Math.max(base, extra));
+        }
     });
 }
 
