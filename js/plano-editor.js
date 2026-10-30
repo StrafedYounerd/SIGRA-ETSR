@@ -1021,6 +1021,8 @@ function conectarEventos() {
         btnModoAgregar.addEventListener("click", () => {
             modoEliminar = false;
             actualizarUIModoEliminar();
+            // forzar la visibilidad de los lugares libres
+            estado.elegidos.clear();
             refrescar();
         });
         btnModoEliminar.addEventListener("click", () => {

@@ -261,22 +261,16 @@
 .editor-plano__movil input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--aqua); }
 
 /* ── Modo agregar / eliminar: cambios visuales en el contenedor ── */
-.editor-plano.modo-eliminar .editor-plano__svg-wrap .lugar-libre {
-    display: none; /* lugares libres ocultos en modo eliminar */
-}
+.editor-plano.modo-eliminar .editor-plano__svg-wrap .lugar-libre,
 .editor-plano.modo-eliminar .editor-plano__svg-wrap .lugar-elegido {
-    display: none; /* equipos nuevos también ocultos en modo eliminar */
-}
-.editor-plano.modo-eliminar .editor-plano__svg-wrap .lugar-elegido[aria-label*="Cambiar"] {
-    display: none; /* mantener oculto */
+    display: none !important;
 }
 
-/* En modo agregar: asegurarse que los lugares libres se vean */
 .editor-plano.modo-agregar .editor-plano__svg-wrap .lugar-libre {
-    display: flex;
+    display: flex !important;
 }
 .editor-plano.modo-agregar .editor-plano__svg-wrap .lugar-elegido {
-    display: block;
+    display: block !important;
 }
 
 /* Modo eliminar: equipos existentes se vuelven clickeables (cursor pointer)

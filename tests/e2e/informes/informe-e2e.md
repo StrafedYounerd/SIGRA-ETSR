@@ -1,36 +1,36 @@
 # Informe de pruebas E2E — SIGRA-ETSR
 
-- **Fecha:** 2026-10-30 05:05:41
+- **Fecha:** 2026-10-30 05:16:03
 - **Aplicación bajo prueba:** http://localhost:8080
 - **Casos ejecutados:** 8
 - **Resultado general:** ✅ todo OK
 
 ## Datos de prueba
 
-Sala E2E: **E2E-Sala Prueba** (id_sala=986)
+Sala E2E: **E2E-Sala Prueba** (id_sala=987)
 
 | Etiqueta PC | id_pc | Fila | Posición |
 | --- | --- | --- | --- |
-| E2E-PC-1 | 440 | 1 | 1 |
-| E2E-PC-2 | 441 | 1 | 2 |
-| E2E-PC-3 | 442 | 1 | 3 |
+| E2E-PC-1 | 443 | 1 | 1 |
+| E2E-PC-2 | 444 | 1 | 2 |
+| E2E-PC-3 | 445 | 1 | 3 |
 
 | Rol | Usuario | id_usuario |
 | --- | --- | --- |
-| docente | e2e_docente | 106 |
-| tecnico | e2e_tecnico | 107 |
-| admin | e2e_admin | 108 |
+| docente | e2e_docente | 109 |
+| tecnico | e2e_tecnico | 110 |
+| admin | e2e_admin | 111 |
 
 ## Resultado por caso
 
 | Caso | Resultado | Duración | Detalle |
 | --- | --- | --- | --- |
-| E2E-1 · el login correcto redirige al panel de cada rol | ✅ OK | 3.9 s | — |
+| E2E-1 · el login correcto redirige al panel de cada rol | ✅ OK | 4.0 s | — |
 | E2E-2 · una contraseña incorrecta no deja entrar y muestra el error | ✅ OK | 1.2 s | — |
 | E2E-3 · sin sesión, las páginas protegidas redirigen al login | ✅ OK | 0.4 s | — |
-| E2E-4 · el docente elige la sala y llega al mapa de la sala | ✅ OK | 2.2 s | — |
+| E2E-4 · el docente elige la sala y llega al mapa de la sala | ✅ OK | 2.3 s | — |
 | E2E-5 · el docente reporta una falla y queda el ticket en la base | ✅ OK | 2.6 s | — |
-| E2E-6 · el servidor rechaza el detalle faltante y el reporte duplicado | ✅ OK | 2.9 s | — |
+| E2E-6 · el servidor rechaza el detalle faltante y el reporte duplicado | ✅ OK | 2.7 s | — |
 | E2E-7 · el técnico lleva el ticket de pendiente a solucionado | ✅ OK | 6.1 s | — |
 | E2E-8 · cada rol sólo accede a las páginas de su rol | ✅ OK | 3.8 s | — |
 ## Ids creados por la suite
@@ -39,36 +39,36 @@ Estos registros se crean durante la corrida (semilla + efectos de los casos) y s
 
 | Tabla | id | Etiqueta | Caso |
 | --- | --- | --- | --- |
-| usuarios | 106 | e2e_docente | E2E-semilla |
-| usuarios | 107 | e2e_tecnico | E2E-semilla |
-| usuarios | 108 | e2e_admin | E2E-semilla |
-| salas | 986 | E2E-Sala Prueba | E2E-semilla |
-| pcs | 440 | E2E-PC-1 | E2E-semilla |
-| pcs | 441 | E2E-PC-2 | E2E-semilla |
-| pcs | 442 | E2E-PC-3 | E2E-semilla |
-| tickets | 78 | E2E-PC-1 / No enciende | E2E-5 |
-| tickets | 79 | E2E-PC-2 / Falta de software | E2E-6 |
-| tickets | 80 | E2E-PC-3 / Sin internet | E2E-7 |
+| usuarios | 109 | e2e_docente | E2E-semilla |
+| usuarios | 110 | e2e_tecnico | E2E-semilla |
+| usuarios | 111 | e2e_admin | E2E-semilla |
+| salas | 987 | E2E-Sala Prueba | E2E-semilla |
+| pcs | 443 | E2E-PC-1 | E2E-semilla |
+| pcs | 444 | E2E-PC-2 | E2E-semilla |
+| pcs | 445 | E2E-PC-3 | E2E-semilla |
+| tickets | 81 | E2E-PC-1 / No enciende | E2E-5 |
+| tickets | 82 | E2E-PC-2 / Falta de software | E2E-6 |
+| tickets | 83 | E2E-PC-3 / Sin internet | E2E-7 |
 ## Ids borrados al terminar
 
 Verificación con `SELECT` de que en la base ya no queda nada de la corrida.
 
 | Tabla | id | Etiqueta | Caso |
 | --- | --- | --- | --- |
-| tickets | 78 | — | — |
-| tickets | 79 | — | — |
-| tickets | 80 | — | — |
-| sesiones_docente | 146 | — | — |
-| sesiones_docente | 147 | — | — |
-| sesiones_docente | 148 | — | — |
-| sesiones_docente | 149 | — | — |
-| pcs | 440 | — | — |
-| pcs | 441 | — | — |
-| pcs | 442 | — | — |
-| salas | 986 | — | — |
-| usuarios | 106 | — | — |
-| usuarios | 107 | — | — |
-| usuarios | 108 | — | — |
+| tickets | 81 | — | — |
+| tickets | 82 | — | — |
+| tickets | 83 | — | — |
+| sesiones_docente | 150 | — | — |
+| sesiones_docente | 151 | — | — |
+| sesiones_docente | 152 | — | — |
+| sesiones_docente | 153 | — | — |
+| pcs | 443 | — | — |
+| pcs | 444 | — | — |
+| pcs | 445 | — | — |
+| salas | 987 | — | — |
+| usuarios | 109 | — | — |
+| usuarios | 110 | — | — |
+| usuarios | 111 | — | — |
 ## Consultas SELECT de verificación
 
 ```sql
