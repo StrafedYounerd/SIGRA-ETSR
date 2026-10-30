@@ -43,7 +43,7 @@ ui_head(['titulo' => 'Panel de administración', 'activo' => 'panel']);
 
         <div class="menu-acciones">
             <a href="usuarios.php"><button type="button" class="btn-secondary">Gestionar usuarios</button></a>
-            <a href="plano-editor.php?id_sala=210"><button type="button" class="btn-primary">Agregar PCs en el plano</button></a>
+            <a href="plano-editor.php?id_sala=1"><button type="button" class="btn-primary">Agregar PCs en el plano</button></a>
             <a href="salas.php"><button type="button" class="btn-secondary">Gestionar salas y dispositivos</button></a>
             <a href="historial.php"><button type="button" class="btn-secondary">Ver historial completo</button></a>
             <a href="estadisticas.php"><button type="button" class="btn-secondary">Ver estadísticas</button></a>
