@@ -227,16 +227,18 @@ function dibujarPlano() {
     });
 
     // Lugares libres (botones operables con teclado).
-    FILAS.forEach(f => {
-        for (let p = 1; p <= estado.slots[f]; p++) {
-            const clave = claveLugar(f, p);
-            if (OCUPADOS.has(clave)) continue;
-            if (estado.elegidos.has(clave)) continue;
-            const c = L.posiciones[f][p - 1];
-            if (!c) continue;
-            frag.appendChild(dibujarLugarLibre(c, f, p));
-        }
-    });
+    if (!modoEliminar) {
+        FILAS.forEach(f => {
+            for (let p = 1; p <= estado.slots[f]; p++) {
+                const clave = claveLugar(f, p);
+                if (OCUPADOS.has(clave)) continue;
+                if (estado.elegidos.has(clave)) continue;
+                const c = L.posiciones[f][p - 1];
+                if (!c) continue;
+                frag.appendChild(dibujarLugarLibre(c, f, p));
+            }
+        });
+    }
 
     // Resumen en el centro de la U
     frag.appendChild(svgEl("text", {

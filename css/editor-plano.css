@@ -260,6 +260,34 @@
 }
 .editor-plano__movil input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--aqua); }
 
+/* ── Modo agregar / eliminar: cambios visuales en el contenedor ── */
+.editor-plano.modo-eliminar .editor-plano__svg-wrap .lugar-libre {
+    display: none; /* lugares libres ocultos en modo eliminar */
+}
+.editor-plano.modo-eliminar .editor-plano__svg-wrap .lugar-elegido {
+    display: none; /* equipos nuevos también ocultos en modo eliminar */
+}
+.editor-plano.modo-eliminar .editor-plano__svg-wrap .lugar-elegido[aria-label*="Cambiar"] {
+    display: none; /* mantener oculto */
+}
+
+/* En modo agregar: asegurarse que los lugares libres se vean */
+.editor-plano.modo-agregar .editor-plano__svg-wrap .lugar-libre {
+    display: flex;
+}
+.editor-plano.modo-agregar .editor-plano__svg-wrap .lugar-elegido {
+    display: block;
+}
+
+/* Modo eliminar: equipos existentes se vuelven clickeables (cursor pointer)
+   ya se maneja en el JS, pero aseguramos estilos si hace falta */
+.editor-plano.modo-eliminar .editor-plano__svg-wrap .mesa-ocupada {
+    cursor: pointer;
+}
+.editor-plano.modo-eliminar .editor-plano__svg-wrap .mesa-ocupada:hover {
+    opacity: 0.8;
+}
+
 @media (max-width: 720px) {
     .editor-plano__cuerpo { grid-template-columns: minmax(0, 1fr); }
     .editor-plano__panel { position: static; }
