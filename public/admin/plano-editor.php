@@ -96,7 +96,7 @@ ui_head([
     'activo' => 'salas',
 ]);
 ?>
-<link rel="stylesheet" href="/css/editor-plano.css?v=2">
+<link rel="stylesheet" href="/css/editor-plano.css?v=3">
     <div class="editor-plano">
 
         <!-- ── Barra superior: sala y acciones ── -->
@@ -261,7 +261,7 @@ ui_head([
 
 <?php if ($sala): ?>
 <script src="/js/layout-plano.js?v=1"></script>
-<script src="/js/plano-editor.js?v=3"></script>
+<script src="/js/plano-editor.js?v=4"></script>
 <?php endif; ?>
 
 <?php ui_foot(); ?>
