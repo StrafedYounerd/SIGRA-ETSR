@@ -256,17 +256,8 @@ function dibujarPlano() {
     // entero en cada cambio, así que se escucha en el contenedor.
     // Los <button> de los lugares ya hacen su click con Enter y Espacio
     // solos (son HTML); el listener del SVG cubre el <g> de "+ fila N".
-    svg.onclick = ev => {
-        const btn = ev.target.closest("button.lugar-libre");
-        if (btn) {
-            ev.preventDefault();
-            activarLugar(Number(btn.dataset.fila), Number(btn.dataset.posicion));
-            return;
-        }
-    };
-    svg.onkeydown = ev => {
-        // Los <button> HTML ya responden Enter/Espacio solos.
-    };
+    svg.onclick = null; // Delegación eliminada para evitar conflictos con listeners directos
+    svg.onkeydown = null;
 
     // En pantallas chicas el plano scanea en horizontal: se deja
     // scrolleado en el primer lugar libre, que es donde el admin
@@ -1021,8 +1012,6 @@ function conectarEventos() {
         btnModoAgregar.addEventListener("click", () => {
             modoEliminar = false;
             actualizarUIModoEliminar();
-            // forzar la visibilidad de los lugares libres
-            estado.elegidos.clear();
             refrescar();
         });
         btnModoEliminar.addEventListener("click", () => {
